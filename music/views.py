@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.views.generic import View
-from .models import Album
+from .models import Album, Song
 from .forms import UserForm
 
 
@@ -34,6 +34,26 @@ class AlbumUpdate(UpdateView):
 class AlbumDelete(DeleteView):
     model = Album
     success_url = reverse_lazy('music:index')
+
+
+class SongDelete(DeleteView):
+    model = Song
+    sucess_url = reverse_lazy('music:detail')
+
+
+class SongFavorite(UpdateView):
+    model = Song
+    fields = ['is_favorite']
+
+
+class AlbumFavorite(UpdateView):
+    model = Album
+    fields = ['is_favorite']
+
+
+class SongCreate(CreateView):
+    model = Song
+    fields = ['album', 'song_title', 'file_type', 'audio_file', 'is_favorite']
 
 
 class UserFormView(View):

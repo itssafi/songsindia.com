@@ -1,5 +1,5 @@
 {% extends 'music/base.html' %}
-{% block title %}Songs India | Album{% endblock %}
+{% block title %}Songs India | Album - {{ album.artist }}{% endblock %}
 
 {% block body %}
     <div class="container-fluid songs-container">
@@ -24,7 +24,7 @@
             <div class="col-sm-8 col-sm-9">
                 <ul class="nav nav-pills" style="margin-bottom: 10px;">
                     <li class="active"><a href="{% url 'music:detail' album.id %}">View All</a></li>
-                    <li><a href="#"> Add New Song</a></li>
+                    <li><a href="{% url 'music:song-add' album.id %}"> Add New Song</a></li>
                 </ul>
                 <div class="panel panel-default">
                     <div class="panel-body">
@@ -34,7 +34,6 @@
                             <tr>
                                 <th>Play Song</th>
                                 <th>Title</th>
-                                <th>Audio File</th>
                                 <th>Favorite</th>
                                 <th>Actions</th>
                             </tr>
@@ -43,16 +42,25 @@
                             <tr>
                                 <th>
                                     <audio controls>
-                                      <source src="{{ song.upload_file.url }}" type="audio/mpeg">
+                                      <source src="{{ song.audio_file.url }}" type="audio/mpeg">
+				      <source src="{{ song.audio_file.url }}" type="audio/ogg; codecs=vorbis">
+					Your brower does not support the audio element.
                                     </audio>
                                 </th>
                                 <th>{{ song.song_title }}</th>
-                                <th>{{ song.file_type }}</th>
-                                <th>{{ song.is_favorite }}</th>
                                 <th>
-                                    <form action="#" method="post" style="display: inline;">
+				    {% if song.is_favorite %}
+				        <a href="#" class="btn btn-primary btn-sm btn-favorite">
+				    {% else %}
+	                                <a href="#" class="btn btn-default btn-sm btn-favorite">
+				    {% endif %}
+				            <span class="glyphicon glyphicon-star"></span>
+					</a>
+                                </th>
+                                <th>
+                                    <form action="{% url 'music:song-delete' song.id %}" method="post" style="display: inline;">
                                         {% csrf_token %}
-                                        <input type="hidden" name="song_id" value="{{ song.id }}" />
+					<input type="hidden" name="song_id" value="{{ song.id }}" />
                                         <button type="submit" class="btn btn-default btn-sm">
                                             <span class="glyphicon glyphicon-trash"></span>
                                         </button>

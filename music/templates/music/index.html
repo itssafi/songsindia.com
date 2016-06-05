@@ -31,8 +31,12 @@
                         </form>
 
                         <!-- Favorite -->
-                        <a href="#" class="btn btn-default btn-sm btn-favorite">
-                            <span class="glyphicon glyphicon-star"></span>
+			{% if album.is_favorite %}
+                            <a href="{% url 'music:album-favorite' album.id %}" class="btn btn-primary btn-sm btn-favorite">
+			{% else %}
+			    <a href="{% url 'music:album-favorite' album.id %}" class="btn btn-default btn-sm btn-favorite">
+			{% endif %}
+                                <span class="glyphicon glyphicon-star"></span>
                         </a>
                     </div>
                 </div>

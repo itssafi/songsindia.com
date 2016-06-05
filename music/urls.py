@@ -1,4 +1,3 @@
-
 from django.conf.urls import url
 from . import views
 
@@ -19,4 +18,13 @@ urlpatterns = [
 
     # /music/album/2/delete/
     url(r'album/(?P<pk>[0-9]+)/delete/$', views.AlbumDelete.as_view(), name='album-delete'),
+
+    # /music/album/2/favorite/
+    url(r'album/(?P<pk>[0-9]+)/favorite/$', views.AlbumFavorite.as_view(), name='album-favorite'),
+
+    # /music/album/2/song/1/delete/
+    url(r'song/(?P<pk>[0-9]+)/delete/$', views.SongDelete.as_view(), name='song-delete'),
+
+    # /music/album/2/song/add/
+    url(r'album/(?P<pk>[0-9]+)/song/add/$', views.SongCreate.as_view(), name='song-add'),
 ]
