@@ -16,6 +16,14 @@ class IndexView(generic.ListView):
         return Album.objects.all()
 
 
+class SongView(generic.ListView):
+    template_name = 'music/songs.html'
+    context_object_name = 'all_songs'
+
+    def get_queryset(self):
+        return Song.objects.all().order_by('song_title')
+
+
 class DetailView(generic.DeleteView):
     model = Album
     template_name = 'music/detail.html'

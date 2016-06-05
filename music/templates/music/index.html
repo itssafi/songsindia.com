@@ -15,11 +15,8 @@
                         <h2>{{ album.album_title }}</h2>
                         <h4>{{ album.artist }}</h4>
 
-                        <!-- Details -->
-                        <a href="{% url 'music:detail' album.id %}" class="btn btn-primary btn-sm">View Details</a>
-
                         <!-- Update -->
-                        <a href="{% url 'music:album-update' album.id %}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{% url 'music:album-update' album.id %}" class="btn btn-primary btn-sm">Edit Album</a>
 
                         <!-- Delete -->
                         <form action="{% url 'music:album-delete' album.id %}" method="post" style="display: inline;">
