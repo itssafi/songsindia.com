@@ -1,8 +1,10 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.core.urlresolvers import reverse
 
 
 class Album(models.Model):
+    user = models.ForeignKey(User, default=1)
     artist = models.CharField(max_length=250)
     album_title = models.CharField(max_length=500)
     genre = models.CharField(max_length=100)
@@ -19,7 +21,6 @@ class Album(models.Model):
 class Song(models.Model):
     album = models.ForeignKey(Album, on_delete=models.CASCADE)
     song_title = models.CharField(max_length=250)
-    file_type = models.CharField(max_length=10)
     audio_file = models.FileField()
     is_favorite = models.BooleanField(default=False)
 
@@ -27,6 +28,6 @@ class Song(models.Model):
         return reverse('music:detail', kwargs={'pk': self.album.id})
 
     def __str__(self):
-        return self.song_title +'.'+self.file_type
+        return self.song_title + '-' + self.album.artist
 
 

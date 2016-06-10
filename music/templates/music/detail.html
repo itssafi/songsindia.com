@@ -3,8 +3,12 @@
 
 {% block body %}
     <div class="container-fluid songs-container">
+        {% if error_message %}
+            <div class="col-sm-offset-2 col-sm-10">
+                <span class="text-danger">{{ error_message }}</span>
+            </div>
+        {% endif %}
         <div class="row">
-
             <!-- Left Album Info -->
             <div class="col-sm-4 col-sm-3">
                 <div class="panel panel-default">
@@ -31,43 +35,50 @@
                         <h3>All Songs</h3>
                         <table class="table">
                             <thead>
-                            <tr>
-                                <th>Play Song</th>
-                                <th>Title</th>
-                                <th>Favorite</th>
-                                <th>Actions</th>
-                            </tr>
+                                <tr>
+                                    <th>Play Song</th>
+                                    <th>Title</th>
+                                    <th>Favorite</th>
+                                    <th>Download</th>
+                                    <th>Actions</th>
+                                </tr>
                             </thead>
-                            {% for song in album.song_set.all %}
-                            <tr>
-                                <th>
-                                    <audio controls>
-                                      <source src="{{ song.audio_file.url }}" type="audio/mpeg">
-				      <source src="{{ song.audio_file.url }}" type="audio/ogg; codecs=vorbis">
-					Your brower does not support the audio element.
-                                    </audio>
-                                </th>
-                                <th>{{ song.song_title }}</th>
-                                <th>
-				    {% if song.is_favorite %}
-				        <a href="#" class="btn btn-primary btn-sm btn-favorite">
-				    {% else %}
-	                                <a href="#" class="btn btn-default btn-sm btn-favorite">
-				    {% endif %}
-				            <span class="glyphicon glyphicon-star"></span>
-					</a>
-                                </th>
-                                <th>
-                                    <form action="{% url 'music:song-delete' song.id %}" method="post" style="display: inline;">
-                                        {% csrf_token %}
-					<input type="hidden" name="song_id" value="{{ song.id }}" />
-                                        <button type="submit" class="btn btn-default btn-sm">
-                                            <span class="glyphicon glyphicon-trash"></span>
-                                        </button>
-                                    </form>
-                                </th>
-                            </tr>
-                            {% endfor %}
+                            <tbody>
+                                {% for song in album.song_set.all %}
+                                <tr>
+                                    <td>
+                                        <audio controls>
+                                            <source src="{{ song.audio_file.url }}" type="audio/mpeg">
+                                            <source src="{{ song.audio_file.url }}" type="audio/ogg; codecs=vorbis">
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    </td>
+                                    <td>{{ song.song_title }}</td>
+                                    <td>
+                                        <a href="{% url 'music:song-favorite' song.id 'detail' %}" class="btn-favorite">
+                                            <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a target="_blank" href="{{ song.audio_file.url }}">
+                                            <button type="button" class="btn btn-success btn-xs">
+                                                <span class="glyphicon glyphicon-download"></span>&nbsp; Download
+                                            </button>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <form action="{% url 'music:song-delete' album.id song.id %}" method="post" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="album_id" value="{{ album.id }}" />
+                                            <input type="hidden" name="song_id" value="{{ song.id }}" />
+                                                <button type="submit" class="btn btn-danger btn-xs">
+                                                    <span class="glyphicon glyphicon-remove"></span>&nbsp; Delete
+                                                </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
                         </table>
                     </div>
                 </div>
