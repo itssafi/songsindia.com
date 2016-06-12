@@ -123,6 +123,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
+AUDIO_FILE_TYPES = ['wav', 'mp3', 'ogg', 'mp4']
+IMAGE_FILE_TYPES = ['png', 'jpg', 'jpeg']
+
 STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -130,9 +133,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # Email config
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_NAME = 'songs.india.team@gmail.com'
 EMAIL_HOST_PASSWORD = 'onlyONE@16'
 EMAIL_PORT = 587
-
+DEFAULT_FROM_EMAIL = EMAIL_HOST_NAME

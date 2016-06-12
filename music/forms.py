@@ -23,3 +23,4 @@ class SongForm(forms.ModelForm):
     class Meta:
         model = Song
         fields = ['album', 'song_title', 'audio_file', 'is_favorite']
+
