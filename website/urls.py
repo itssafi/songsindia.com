@@ -25,6 +25,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^music/', include('music.urls')),
     url(r'^stocks/', views.StockList.as_view()),
+    url(r'^', include('music.urls')),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
