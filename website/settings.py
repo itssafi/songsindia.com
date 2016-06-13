@@ -137,6 +137,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_NAME = 'songs.india.team@gmail.com'
-EMAIL_HOST_PASSWORD = 'iiaantyrkwarpbpy'
+EMAIL_HOST_PASSWORD = 'etoqduytbzqkcjpm'
 EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = EMAIL_HOST_NAME
