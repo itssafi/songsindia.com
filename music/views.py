@@ -21,11 +21,6 @@ from .forms import UserForm, AlbumForm, SongForm
 from utils.forms.reset_password_form import PasswordResetForm, ChangePasswordForm
 
 
-class HomeView(View):
-
-    def get(self, request):
-        return render(request, 'music/home.html')
-
 
 class IndexView(generic.ListView):
     template_name = 'music/index.html'
@@ -33,7 +28,7 @@ class IndexView(generic.ListView):
 
     def get_queryset(self):
         if not self.request.user.is_authenticated():
-            self.template_name = 'music/login.html'
+            self.template_name = 'music/home.html'
             return
         albums = Album.objects.filter(user=self.request.user)
         song_results = Song.objects.all()
@@ -432,7 +427,7 @@ class LoginView(FormView):
      Provides the ability to login as a user with a username and password
      """
      template_name = 'music/login.html'
-     success_url = '/music/index/'
+     success_url = '/music/'
      form_class = AuthenticationForm
      redirect_field_name = REDIRECT_FIELD_NAME
  
