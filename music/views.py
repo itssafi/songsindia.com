@@ -369,7 +369,7 @@ class ForgetPasswordView(View):
             
             subject = 'Reset Password - SongsIndia.com'
             # send_mail(subject, email_body, settings.DEFAULT_FROM_EMAIL,
-            #           [email], fail_silently=True)
+            #           [email], fail_silently=False)
             context = {'form': form,
                        'success_message':
                        'An email has been sent to {0}. Please check its inbox to continue reseting password({1}).'.format(email, temp_pass)}

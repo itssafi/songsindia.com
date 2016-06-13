@@ -25,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '&zlbc-ne*+zjb&wr3@r2)ed6(jg1atx#5z&m4es*cp1+mdx+82'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -137,6 +137,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_NAME = 'songs.india.team@gmail.com'
-EMAIL_HOST_PASSWORD = 'onlyONE@16'
+EMAIL_HOST_PASSWORD = 'iiaantyrkwarpbpy'
 EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = EMAIL_HOST_NAME
