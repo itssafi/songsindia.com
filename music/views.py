@@ -96,7 +96,7 @@ class AlbumCreate(View):
             album.album_logo = request.FILES['album_logo']
             file_type = album.album_logo.url.split('.')[-1]
             file_type = file_type.lower()
-            if file_type not in IMAGE_FILE_TYPES:
+            if file_type not in settings.IMAGE_FILE_TYPES:
                 context = {
                     'album': album,
                     'form': form,
