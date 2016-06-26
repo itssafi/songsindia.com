@@ -1,6 +1,6 @@
 {% extends 'music/base_visitor.html' %}
 {% block title %}Songs India | Login{% endblock %}
-{% block login_active %}active{% endblock %}
+{% block home_active %}active{% endblock %}
 {% load staticfiles %}
 <script src="{% static 'music/js/main.js' %}"></script>
 {% block body %}
@@ -12,7 +12,7 @@
                     <h3>Welcome to SongsIndia music application</h3>
                 </div>
                 <div class="panel-footer">
-		              Please <a href="{% url 'music:login' %}">Click here</a> to login.<br/>
+		            Please <a href="{% url 'music:login' %}">Click here</a> to login.<br/>
                     Don't have an account? <a href="{% url 'music:register' %}">Click here</a> to register.
                 </div>
             </div>

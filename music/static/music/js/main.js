@@ -62,7 +62,7 @@ $(document).ready(function() {
 
 function IsEmpty(){
     username = document.getElementById("id_username").value
-    password = document.getElementById("id_password").value
+	password = document.getElementById("id_password").value
     if(username.length == 0 && password.length == 0){
         document.getElementById("errorMsgUname").innerHTML = "Username is required";
         document.getElementById("errorMsgPwd").innerHTML = "Password is required";

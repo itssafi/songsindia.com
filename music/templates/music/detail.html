@@ -55,9 +55,18 @@
                                     </td>
                                     <td>{{ song.song_title }}</td>
                                     <td>
-                                        <a href="{% url 'music:song-favorite' song.id 'detail' %}" class="btn-favorite">
-                                            <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
-                                        </a>
+                                      {% if filter_by == 'all' %}
+				      <form action="{% url 'music:song-favorite' 'all' %}" method="post">
+					{% else %}
+					<form action="{% url 'music:song-favorite' 'favorites' %}" method="post">
+					  {% endif %}
+					  {% csrf_token %}
+					  <input type="hidden" name="song_id" value="{{song.id}}" />
+					  <input type="hidden" name="template" value="detail" />
+                                          <button type="submit" class="btn btn-default btn-xs">
+					    <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
+                                          </button>
+					</form>
                                     </td>
                                     <td>
                                         <a target="_blank" href="{{ song.audio_file.url }}">

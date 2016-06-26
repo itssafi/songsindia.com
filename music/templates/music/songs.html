@@ -1,5 +1,7 @@
 {% extends 'music/base.html' %}
 {% block title %}Songs India | All Songs{% endblock %}
+{% block songs_active %}active{% endblock %}
+{% load staticfiles %}
 {% block body %}
     {% if all_songs %}
     <div class="container-fluid songs-container">
@@ -10,6 +12,34 @@
                         <a href="{% url 'music:songs' 'all' %}">View All</a></li>
                     <li role="presentation" {% if filter_by == 'favorites' %}class="active"{% endif %}>
                         <a href="{% url 'music:songs' 'favorites' %}">Favorites</a></li>
+                    {% if audio %}
+                    <div id="wrapper">
+                        <audio id="track">
+                            <source src="{{ audio }}" type="audio/mp3">
+                        </audio>
+                        <nav>
+                            <div id="defaultBar">
+                                <div id="progressBar"></div>
+                            </div>
+                            <div id="buttons">
+                                <button type="button" id="playButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <button type="button" id="backwardButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <span id="currentTime">00:00</span> /
+                                <span id="fullDuration">00:00</span>&nbsp;&nbsp;&nbsp;&nbsp;
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <button type="button" id="forwardButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <button type="button" id="volumePlus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <button type="button" id="volumeMinus"></button>
+                            </div>
+                        </nav>
+                    </div>
+                    <link rel="stylesheet" type="text/css" href="{% static 'music/main.css' %}"/>
+                    <script type="text/javascript" src="{% static 'music/js/controls.js' %}"></script>
+                {% endif %}
                 </ul>
             </div>
         </div>
@@ -32,11 +62,17 @@
                                     {% for song in all_songs %}
                                     <tr>
                                         <td>
-                                            <audio controls>
-                                                <source src="{{ song.audio_file.url }}" type="audio/mpeg">
-                                                <source src="{{ song.audio_file.url }}" type="audio/ogg; codecs=vorbis">
-                                                Your browser does not support the audio element.
-                                            </audio>
+                                            {% if filter_by == 'all' %}
+                                                <form action="{% url 'music:songs' 'all' %}" method="post">
+                                            {% else %}
+                                                <form action="{% url 'music:songs' 'favorites' %}" method="post">
+                                            {% endif %}
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                    <span class="glyphicon glyphicon-play"></span>
+                                                    </button>
+                                                </form>
                                         </td>
                                         <td>{{ song.song_title }}</td>
                                         <td>{{ song.album.artist }}</td>
@@ -47,16 +83,25 @@
                                             <a href="{% url 'music:detail' song.album.id %}">{{ song.album.album_title }}</a>
                                         </td>
                                         <td>
-                                        <a target="_blank" href="{{ song.audio_file.url }}">
-                                            <button type="button" class="btn btn-success btn-xs">
-                                                <span class="glyphicon glyphicon-download"></span>&nbsp; Download
-                                            </button>
-                                        </a>
+                                            <a target="_blank" href="{{ song.audio_file.url }}">
+                                                <button type="button" class="btn btn-success btn-xs">
+                                                    <span class="glyphicon glyphicon-download"></span>&nbsp; Download
+                                                </button>
+                                            </a>
                                         </td>
                                         <td>
-                                            <a href="{% url 'music:song-favorite' song.id 'songs' %}" class="btn-favorite">
-                                                <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
-                                            </a>
+					  {% if filter_by == 'all' %}
+					  <form action="{% url 'music:song-favorite' 'all' %}" method="post">
+					  {% else %}
+					  <form action="{% url 'music:song-favorite' 'favorites' %}" method="post">
+					  {% endif %}
+					    {% csrf_token %}
+					    <input type="hidden" name="song_id" value="{{song.id}}" />
+					    <input type="hidden" name="template" value="songs" />
+                                            <button type="submit" class="btn btn-default btn-xs">
+					      <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
+                                            </button>
+					  </form>
                                         </td>
                                     </tr>
                                 {% endfor %}

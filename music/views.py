@@ -21,6 +21,11 @@ from .forms import UserForm, AlbumForm, SongForm
 from utils.forms.reset_password_form import PasswordResetForm, ChangePasswordForm
 
 
+class HomeView(View):
+
+    def get(self, request):
+        return render(request, 'music/home.html')
+
 
 class IndexView(generic.ListView):
     template_name = 'music/index.html'
@@ -57,7 +62,7 @@ class SongView(View):
             for album in Album.objects.filter(user=self.request.user):
                 for song in album.song_set.all():
                     song_ids.append(song.pk)
-            users_songs = Song.objects.filter(pk__in=song_ids)
+            users_songs = Song.objects.filter(pk__in=song_ids).order_by('song_title')
             if filter_by == 'favorites':
                 users_songs = users_songs.filter(is_favorite=True)
         except Album.DoesNotExist:
@@ -65,6 +70,26 @@ class SongView(View):
         return render(request, 'music/songs.html', {
             'all_songs': users_songs,
             'filter_by': filter_by,
+        })
+
+    def post(self, request, filter_by):
+        if not self.request.user.is_authenticated():
+            return render(request, 'music/login.html')
+        try:
+            song_ids = []
+            for album in Album.objects.filter(user=self.request.user):
+                for song in album.song_set.all():
+                    song_ids.append(song.pk)
+            users_songs = Song.objects.filter(pk__in=song_ids).order_by('song_title')
+            if filter_by == 'favorites':
+                users_songs = users_songs.filter(is_favorite=True)
+        except Album.DoesNotExist:
+            users_songs = []
+        # import pdb; pdb.set_trace()
+        return render(request, 'music/songs.html', {
+            'all_songs': users_songs,
+            'filter_by': filter_by,
+            'audio': self.request.POST.get('audio_url')
         })
 
 
@@ -105,7 +130,7 @@ class AlbumCreate(View):
                 }
                 return render(request, self.template_name, context)
             album.save()
-            albums = Album.objects.filter(user=request.user)
+            albums = Album.objects.filter(user=request.user).order_by('album_title')
             return render(request, 'music/index.html', {'albums': albums})
         context = {
             "form": form,
@@ -162,7 +187,10 @@ class SongCreate(View):
         if not request.user.is_authenticated():
             return render(request, 'music/login.html')
 
-        form = self.form_class(None)
+        form = self.form_class
+        # import pdb; pdb.set_trace()
+        # form.base_fields['album'].queryset.filter(user=request.user)
+        form.base_fields['album'].queryset = Album.objects.filter(user=request.user)
         return render(request, self.template_name, {'form': form})
 
     # Process form data
@@ -206,45 +234,60 @@ class SongCreate(View):
 class SongDelete(View):
 
     def post(self, request, album_id, song_id):
+        if not request.user.is_authenticated():
+            return render(request, 'music/login.html')
         album = get_object_or_404(Album, pk=album_id)
         song = Song.objects.get(pk=song_id)
         song.delete()
         return render(request, 'music/detail.html', {'album': album})
 
 
-def song_favorite(request, song_id, template):
-    if not request.user.is_authenticated():
-        return render(request, 'music/login.html')
-    song_ids = []
-    albums = Album.objects.filter(user=request.user)
-    for album in albums:
-        for song in album.song_set.all():
-            song_ids.append(song.pk)
-    songs = Song.objects.filter(pk__in=song_ids)
-    song = get_object_or_404(Song, pk=song_id)
-    try:
-        if song.is_favorite:
-            song.is_favorite = False
-        else:
-            song.is_favorite = True
-        song.save()
-    except (KeyError, Song.DoesNotExist):
-        if template == 'songs':
-            return render(request, 'music/songs.html',
-                          {'all_songs': songs, 'error_message': 'Song does not exists'})
-        else:
-            return render(request, 'music/index.html',
-                          {'albums': albums, 'error_message': 'Song does not exists'})
-    else:
+class SongFavoriteView(View):
+
+    def post(self, request, filter_by):
+        if not request.user.is_authenticated():
+            return render(request, 'music/login.html')
+        song_ids = []
+        albums = Album.objects.filter(user=self.request.user)
+        song_id = request.POST.get('song_id')
+        template = request.POST.get('template')
         for album in albums:
             for song in album.song_set.all():
                 song_ids.append(song.pk)
         songs = Song.objects.filter(pk__in=song_ids)
+        song = get_object_or_404(Song, pk=song_id)
+        try:
+            if song.is_favorite:
+                song.is_favorite = False
+            else:
+                song.is_favorite = True
+            song.save()
+        except (KeyError, Song.DoesNotExist):
+            if template == 'songs':
+                return render(request, 'music/songs.html',
+                              {'all_songs': songs,
+                               'filter_by': filter_by,
+                               'error_message': 'Song does not exists'})
+            else:
+                return render(request, 'music/index.html',
+                              {'albums': albums,
+                               'filter_by': filter_by,
+                               'error_message': 'Song does not exists'})
+        for album in albums:
+            for song in album.song_set.all():
+                song_ids.append(song.pk)
         if template == 'songs':
-            return render(request, 'music/songs.html', {'all_songs': songs})
+            if filter_by == 'all':
+                songs = Song.objects.filter(pk__in=song_ids)
+            else:
+                songs = Song.objects.filter(Q(pk__in=song_ids) & Q(is_favorite=True))
+            return render(request, 'music/songs.html',
+                          {'all_songs': songs,
+                           'filter_by': filter_by})
         else:
             album = get_object_or_404(Album, pk=song.album_id)
-            return render(request, 'music/detail.html', {'album': album})
+            return render(request, 'music/detail.html',
+                          {'album': album, 'filter_by': filter_by})
 
 
 def album_favorite(request, album_id):
@@ -300,12 +343,16 @@ class UserFormView(View):
         return render(request, self.template_name, {'form': form})
 
 
-def user_login(request):
+class UserLoginView(View):
     login_template = 'music/login.html'
-    if request.method == "POST":
+
+    def get(self, request):
+        return render(request, self.login_template)
+
+    def post(self, request):
         username = request.POST['username']
         if not User.objects.filter(username=username):
-            return render(request, login_template, {'error_message': 'Username does not exists.'})
+            return render(request, self.login_template, {'error_message': 'Username does not exists.'})
         password = request.POST['password']
         user = authenticate(username=username, password=password)
         if user is not None:
@@ -314,10 +361,9 @@ def user_login(request):
                 albums = Album.objects.filter(user=request.user)
                 return render(request, 'music/index.html', {'albums': albums})
             else:
-                return render(request, login_template, {'error_message': 'Your account has been disabled'})
+                return render(request, self.login_template, {'error_message': 'Your account has been disabled'})
         else:
-            return render(request, login_template, {'error_message': 'Username or password is incorrect.'})
-    return render(request, login_template)
+            return render(request, self.login_template, {'error_message': 'Username or password is incorrect.'})
 
 
 class LogoutView(RedirectView):
@@ -345,35 +391,48 @@ class ForgetPasswordView(View):
             # Cleaned normalized data
             username = form.cleaned_data['username']
             email = form.cleaned_data['email_address']
+            if not User.objects.filter(username=username):
+                context = {'form': form,
+                           'error_message': 'Username does not exists.'}
+                return render(request, self.template_name, context)
+            
             try:
                 user = User.objects.get(Q(username=username) & Q(email=email))
-
             except User.DoesNotExist:
                 context = {'form': form,
-                           'error_message': 'Username and email address does not associated each other.'}
+                           'error_message': 'Provided email address does not matching with the username.'}
                 return render(request, self.template_name, context)
-            user.is_active = True
-            if not user.is_active:
-                context = {'form': form,
-                           'error_message': 'Your account has been disabled'}
-                return render(request, self.template_name, context)
+
+            # if not user.is_active:
+            #     context = {'form': form,
+            #                'error_message': 'Your account has been disabled'}
+            #     return render(request, self.template_name, context)
 
             temp_pass = ''.join(random.choice(
                 string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(8))
             user.set_password(temp_pass)
             user.is_active = False
 
-            email_body = """Hello {0},\n\nYour SongsIndia credentials:\n\n\t
-            Username: {1}\n\tTemporary Password: {2}\n\nPlease <a href="{3}">click here</a>
+            email_body = """Hello {0},\n\nYour Songs India credentials:\n\n\t
+            Username: {1}\n\tTemporary Password: {2}\n\n
+            Please <a href="{3}/music/change-password/">click here</a>
             to reset your password\n\n\n\nRegards,\nSongsIndia Team""".format(
-                user.first_name, user.username, temp_pass, self.request.get_raw_uri())
+                user.first_name, user.username, temp_pass, self.request.get_host())
+
+            # email_body = """<p>Hello {0}, <br/><br/>Your Songs India credentials:<br/><br/>
+            # Username: {1}<br/>Temporary Password: {2}<br/><br/>
+            # Please <a href="{3}/music/change-password/">click here</a>
+            # to reset your password<br/><br/><br/><br/>Regards,<br/>SongsIndia Team</p>""".format(
+            #     user.first_name, user.username, temp_pass, self.request.get_host())
             
             subject = 'Reset Password - SongsIndia.com'
             # send_mail(subject, email_body, settings.DEFAULT_FROM_EMAIL,
             #           [email], fail_silently=False)
+            success_message = 'An email has been sent to {0}. Please check its inbox to continue '\
+                              'reset your password({1}).'.format(email, temp_pass)
             context = {'form': form,
-                       'success_message':
-                       'An email has been sent to {0}. Please check its inbox to continue reseting password({1}).'.format(email, temp_pass)}
+                       'success_message': email_body
+                       }
             user.save()
             return render(request, self.template_name, context)
         return render(request, self.template_name, {'form': form})
@@ -395,10 +454,7 @@ class ChangePasswordView(View):
             current_password = form.cleaned_data['current_password']
             new_password = form.cleaned_data['new_password']
             confirm_password = form.cleaned_data['confirm_password']
-            try:
-                user = User.objects.get(username=username)
-
-            except User.DoesNotExist:
+            if not User.objects.filter(username=username):
                 context = {'form': form,
                            'error_message': 'Username does not exists.'}
                 return render(request, self.template_name, context)
@@ -421,7 +477,6 @@ class ChangePasswordView(View):
         return render(request, self.template_name, {'form': form})
 
 
-
 class LoginView(FormView):
      """
      Provides the ability to login as a user with a username and password
@@ -430,26 +485,26 @@ class LoginView(FormView):
      success_url = '/music/'
      form_class = AuthenticationForm
      redirect_field_name = REDIRECT_FIELD_NAME
- 
+
      @method_decorator(sensitive_post_parameters('password'))
      @method_decorator(csrf_protect)
      @method_decorator(never_cache)
      def dispatch(self, request, *args, **kwargs):
          # Sets a test cookie to make sure the user has cookies enabled
          request.session.set_test_cookie()
- 
+
          return super(LoginView, self).dispatch(request, *args, **kwargs)
- 
+
      def form_valid(self, form):
          auth_login(self.request, form.get_user())
- 
+
          # If the test cookie worked, go ahead and
          # delete it since its no longer needed
          if self.request.session.test_cookie_worked():
              self.request.session.delete_test_cookie()
- 
+
          return super(LoginView, self).form_valid(form)
- 
+
      def get_success_url(self):
          redirect_to = self.request.POST.get(self.redirect_field_name)
          if not is_safe_url(url=redirect_to, host=self.request.get_host()):
