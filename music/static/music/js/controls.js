@@ -15,7 +15,7 @@ var progressBar = document.getElementById('progressBar');
 duration.innerHTML = minutes + ':' + seconds;
 
 playButton.addEventListener('click', playOrPause, false);
-playButton.addEventListener('click', muteOrSpeaker, false);
+muteButton.addEventListener('click', muteOrSpeaker, false);
 bar.addEventListener('click', clickedBar, false);
 
 function playOrPause() {
