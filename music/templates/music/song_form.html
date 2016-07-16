@@ -1,5 +1,6 @@
 {% extends 'music/base.html' %}
 {% block title %}Songs India | Add New Song{% endblock %}
+{% block add_song_active %}active{% endblock %}
 {% block body %}
 <div class="container-fluid">
     <div class="row">
@@ -7,7 +8,7 @@
             <div class="panel panel-default">
                 <div class="panel-body">
                     <h3>Add New Song</h3>
-                    <form class="form-horizontal" action="" method="post" enctype="multipart/form-data">
+                    <form class="form-horizontal" action="" method="post" enctype="multipart/form-data" autocomplete="off">
                         {% csrf_token %}
                         {% include 'music/form-template.html' %}
                         <div class="form-group">

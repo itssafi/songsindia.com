@@ -1,6 +1,6 @@
 {% extends 'music/base.html' %}
 {% block title %}Songs India | Album - {{ album.artist }}{% endblock %}
-
+{% load staticfiles %}
 {% block body %}
     <div class="container-fluid songs-container">
         {% if error_message %}
@@ -28,11 +28,33 @@
             <div class="col-sm-8 col-sm-9">
                 <ul class="nav nav-pills" style="margin-bottom: 10px;">
                     <li class="active"><a href="{% url 'music:detail' album.id %}">View All</a></li>
-                    <li><a href="{% url 'music:song-add' album.id %}"> Add New Song</a></li>
+                    <li><a href="{% url 'music:song-add' %}"> Add New Song</a></li>
                 </ul>
                 <div class="panel panel-default">
                     <div class="panel-body">
-                        <h3>All Songs</h3>
+			{% if audio %}
+			<div id="wrapper">
+                        <audio id="track">
+                            <source src="{{ audio }}" type="audio/mp3">
+                        </audio>
+                        <nav>
+                            <div id="defaultBar">
+                                <div id="progressBar"></div>
+                            </div>
+                            <div id="buttons">
+                                <button type="button" id="playButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <button type="button" id="volumePlus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                <button type="button" id="volumeMinus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <span id="currentTime">00:00</span> /
+                                <span id="fullDuration">00:00</span>
+                            </div>
+                        </nav>
+			</div>
+			<link rel="stylesheet" type="text/css" href="{% static 'music/main.css' %}"/>
+			<script type="text/javascript" src="{% static 'music/js/controls.js' %}"></script>
+			{% endif %}
                         <table class="table">
                             <thead>
                                 <tr>
@@ -47,11 +69,13 @@
                                 {% for song in album.song_set.all %}
                                 <tr>
                                     <td>
-                                        <audio controls>
-                                            <source src="{{ song.audio_file.url }}" type="audio/mpeg">
-                                            <source src="{{ song.audio_file.url }}" type="audio/ogg; codecs=vorbis">
-                                            Your browser does not support the audio element.
-                                        </audio>
+                                        <form action="{% url 'music:detail' album.id %}" method="post">
+					  {% csrf_token %}
+                                            <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                              <span class="glyphicon glyphicon-play"></span>
+                                            </button>
+					</form>
                                     </td>
                                     <td>{{ song.song_title }}</td>
                                     <td>

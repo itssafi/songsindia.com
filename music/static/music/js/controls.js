@@ -2,7 +2,7 @@ var track = document.getElementById('track');
 var playButton = document.getElementById('playButton');
 var muteButton = document.getElementById('muteButton');
 
-var duration = document.getElementById('fullDuration');
+var fullDuration = document.getElementById('fullDuration');
 var currentTime = document.getElementById('currentTime');
 
 var minutes = pad(parseInt(track.duration/60));
@@ -12,7 +12,7 @@ var barSize = 640;
 var bar = document.getElementById('defaultBar');
 var progressBar = document.getElementById('progressBar');
 
-duration.innerHTML = minutes + ':' + seconds;
+fullDuration.innerHTML = minutes + ':' + seconds;
 
 playButton.addEventListener('click', playOrPause, false);
 muteButton.addEventListener('click', muteOrSpeaker, false);
@@ -51,7 +51,7 @@ function update() {
         progressBar.style.width = size + 'px';
     }
     else {
-        currentTime.innerHTML = "00.00";
+        currentTime.innerHTML = "00:00";
         playButton.style.backgroundImage = 'url(../../play.png)';
         progressBar.style.width = '0px';
         window.clearInterval(updateTime);
