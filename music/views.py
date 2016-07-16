@@ -1,4 +1,4 @@
-import random, string
+import random, string, os
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.core.urlresolvers import reverse_lazy
@@ -18,26 +18,19 @@ from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from .models import Album, Song
 from .forms import UserForm, AlbumForm, SongForm
-from utils.forms.reset_password_form import PasswordResetForm, ChangePasswordForm
+from utils.forms.custom_forms import PasswordResetForm, ChangePasswordForm, LoginForm
 
 
-class HomeView(View):
+class IndexView(View):
+    template_name = 'music/index.html'
 
     def get(self, request):
-        return render(request, 'music/home.html')
+        if not request.user.is_authenticated():
+            return redirect('music:login')
 
-
-class IndexView(generic.ListView):
-    template_name = 'music/index.html'
-    context_object_name = 'albums'
-
-    def get_queryset(self):
-        if not self.request.user.is_authenticated():
-            self.template_name = 'music/home.html'
-            return
-        albums = Album.objects.filter(user=self.request.user)
+        albums = Album.objects.filter(user=request.user)
         song_results = Song.objects.all()
-        query = self.request.GET.get('search')
+        query = request.GET.get('search')
         if query:
             albums = albums.filter(
                 Q(album_title__icontains=query) |
@@ -47,16 +40,31 @@ class IndexView(generic.ListView):
                 Q(song_title__icontains=query)
             ).distinct()
             if song_results:
-                self.context_object_name = 'song_results'
-                return song_results
-        return albums
+                request.session['query'] = query
+                return render(request, self.template_name,
+                              {'song_results': song_results})
+        return render(request, self.template_name, {'albums': albums})
 
+    def post(self, request):
+        if not request.user.is_authenticated():
+            return redirect('music:login')
+
+        query = request.session['query']
+        if query:
+            song_results = Song.objects.all()
+            song_results = song_results.filter(
+                Q(song_title__icontains=query)
+            ).distinct()
+            if song_results:
+                return render(request, self.template_name,
+                              {'song_results': song_results,
+                               'audio': str(self.request.POST.get('audio_url'))})
 
 class SongView(View):
 
     def get(self, request, filter_by):
         if not self.request.user.is_authenticated():
-            return render(request, 'music/login.html')
+            return redirect('music:login')
         try:
             song_ids = []
             for album in Album.objects.filter(user=self.request.user):
@@ -74,7 +82,8 @@ class SongView(View):
 
     def post(self, request, filter_by):
         if not self.request.user.is_authenticated():
-            return render(request, 'music/login.html')
+            return redirect('music:login')
+
         try:
             song_ids = []
             for album in Album.objects.filter(user=self.request.user):
@@ -85,18 +94,32 @@ class SongView(View):
                 users_songs = users_songs.filter(is_favorite=True)
         except Album.DoesNotExist:
             users_songs = []
-        # import pdb; pdb.set_trace()
+
         return render(request, 'music/songs.html', {
             'all_songs': users_songs,
             'filter_by': filter_by,
-            'audio': self.request.POST.get('audio_url')
+            'audio': str(self.request.POST.get('audio_url'))
         })
 
 
-class DetailView(generic.DetailView):
-    model = Album
+class DetailView(View):
     template_name = 'music/detail.html'
 
+    def get(self, request, album_id):
+        if not request.user.is_authenticated():
+            return redirect('music:login')
+
+        album = get_object_or_404(Album, id=album_id, user=request.user)
+        return render(request, self.template_name, {'album': album})
+
+    def post(self, request, album_id):
+        if not request.user.is_authenticated():
+            return redirect('music:login')
+
+        album = get_object_or_404(Album, id=album_id, user=request.user)
+        audio = str(self.request.POST.get('audio_url'))
+        return render(request, self.template_name,
+                      {'album': album, 'audio': audio})
 
 class AlbumCreate(View):
     form_class = AlbumForm
@@ -105,7 +128,7 @@ class AlbumCreate(View):
     # Display blank form
     def get(self, request):
         if not request.user.is_authenticated():
-            return render(request, 'music/login.html')
+            return redirect('music:login')
         
         form = self.form_class(None)
         return render(request, self.template_name, {'form': form})
@@ -113,7 +136,7 @@ class AlbumCreate(View):
     # Process form data
     def post(self, request):
         if not request.user.is_authenticated():
-            return render(request, 'music/login.html')
+            return redirect('music:login')
 
         form = AlbumForm(request.POST or None, request.FILES or None)
         if form.is_valid():
@@ -142,7 +165,7 @@ def album_update(request, album_id):
     template_name = 'music/album_update_form.html'
 
     if not request.user.is_authenticated():
-        return render(request, 'music/login.html')
+        return redirect('music:login')
 
     album = Album.objects.get(id=album_id)
     if request.POST:
@@ -173,9 +196,20 @@ def album_update(request, album_id):
         return render(request, template_name, {'form': form})
 
 
-class AlbumDelete(DeleteView):
-    model = Album
-    success_url = reverse_lazy('music:index')
+class AlbumDelete(View):
+
+    def post(self, request, album_id):
+        if not request.user.is_authenticated():
+            return redirect('music:login')
+
+        album = Album.objects.get(id=album_id)
+        for song in album.song_set.all():
+            os.system('rm -rf .%s' % song.audio_file.url)
+
+        os.system('rm -rf .%s' % album.album_logo.url)
+        album.delete()
+        albums = Album.objects.filter(user=request.user).order_by('album_title')
+        return render(request, 'music/index.html', {'albums': albums})
 
 
 class SongCreate(View):
@@ -183,24 +217,23 @@ class SongCreate(View):
     template_name = 'music/song_form.html'
 
     # Display blank form
-    def get(self, request, album_id):
+    def get(self, request):
         if not request.user.is_authenticated():
-            return render(request, 'music/login.html')
+            return redirect('music:login')
 
         form = self.form_class
-        # import pdb; pdb.set_trace()
-        # form.base_fields['album'].queryset.filter(user=request.user)
         form.base_fields['album'].queryset = Album.objects.filter(user=request.user)
         return render(request, self.template_name, {'form': form})
 
     # Process form data
-    def post(self, request, album_id):
+    def post(self, request):
         if not request.user.is_authenticated():
-            return render(request, 'music/login.html')
+            return redirect('music:login')
         
-        album = get_object_or_404(Album, pk=album_id)
         form = SongForm(request.POST or None, request.FILES or None)
         if form.is_valid():
+            album_id = int(request.POST.get('album'))
+            album = get_object_or_404(Album, id=album_id)
             albums_songs = album.song_set.all()
             for song in albums_songs:
                 if song.song_title == form.cleaned_data.get("song_title"):
@@ -225,8 +258,7 @@ class SongCreate(View):
             song.save()
             return render(request, 'music/detail.html', {'album': album})
         context = {
-            'album': album,
-            'form': form,
+            'form': form
         }
         return render(request, 'music/song_form.html', context)
 
@@ -235,9 +267,11 @@ class SongDelete(View):
 
     def post(self, request, album_id, song_id):
         if not request.user.is_authenticated():
-            return render(request, 'music/login.html')
+            return redirect('music:login')
+
         album = get_object_or_404(Album, pk=album_id)
         song = Song.objects.get(pk=song_id)
+        os.system('rm -rf .%s' % song.audio_file.url)
         song.delete()
         return render(request, 'music/detail.html', {'album': album})
 
@@ -246,7 +280,7 @@ class SongFavoriteView(View):
 
     def post(self, request, filter_by):
         if not request.user.is_authenticated():
-            return render(request, 'music/login.html')
+            return redirect('music:login')
         song_ids = []
         albums = Album.objects.filter(user=self.request.user)
         song_id = request.POST.get('song_id')
@@ -292,7 +326,7 @@ class SongFavoriteView(View):
 
 def album_favorite(request, album_id):
     if not request.user.is_authenticated():
-        return render(request, 'music/login.html')
+        return redirect('music:login')
 
     albums = Album.objects.filter(user=request.user)
     album = get_object_or_404(Album, pk=album_id)
@@ -344,27 +378,36 @@ class UserFormView(View):
 
 
 class UserLoginView(View):
+    form_class = LoginForm
     login_template = 'music/login.html'
 
     def get(self, request):
-        return render(request, self.login_template)
+        form = self.form_class(None)
+        return render(request, self.login_template, {'form': form})
 
     def post(self, request):
-        username = request.POST['username']
-        if not User.objects.filter(username=username):
-            return render(request, self.login_template, {'error_message': 'Username does not exists.'})
-        password = request.POST['password']
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            if user.is_active:
-                login(request, user)
-                albums = Album.objects.filter(user=request.user)
-                return render(request, 'music/index.html', {'albums': albums})
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            username = request.POST['username']
+            if not User.objects.filter(username=username):
+                return render(request, self.login_template,
+                              {'form': form, 'error_message': 'Username does not exists.'})
+            password = request.POST['password']
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    albums = Album.objects.filter(user=request.user)
+                    return render(request, 'music/index.html',
+                                  {'form': form, 'albums': albums})
+                else:
+                    return render(request, self.login_template,
+                                  {'form': form, 'error_message': 'Your account has been disabled'})
             else:
-                return render(request, self.login_template, {'error_message': 'Your account has been disabled'})
-        else:
-            return render(request, self.login_template, {'error_message': 'Username or password is incorrect.'})
+                return render(request, self.login_template,
+                              {'form': form, 'error_message': 'Login failed... username or password is incorrect.'})
 
+        return render(request, self.login_template, {'form': form})
 
 class LogoutView(RedirectView):
     """

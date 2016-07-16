@@ -1,6 +1,7 @@
 {% extends 'music/base.html' %}
 {% block albums_active %}active{% endblock %}
 {% block title %}Songs India | Index{% endblock %}
+{% load staticfiles %}
 {% block body %}
 <div class="albums-container container-fluid">
 
@@ -51,13 +52,39 @@
         {% endfor %}
         </div>
     </div>
+
 <!-- If user searches and there are songs -->
 {% elif song_results %}
     <div class="row">
         <div class="col-sm-12">
-            <h3>Search Results</h3>
-        </div>
-        <div class="col-sm-12">
+	  <ul class="nav nav-pills" style="margin-bottom: 10px;">
+	    <li><h2>Search results</h2></li>
+	    {% if audio %}
+	      <div id="wrapper">
+		<audio id="track">
+		  <source src="{{ audio }}" type="audio/mp3">
+		</audio>
+		<nav>
+		  <div id="defaultBar">
+		    <div id="progressBar"></div>
+		  </div>
+		  <div id="buttons">
+		    <button type="button" id="playButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+		    <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+		    <button type="button" id="volumePlus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+		    <button type="button" id="volumeMinus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+		    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		    <span id="currentTime">00:00</span> /
+		    <span id="fullDuration">00:00</span>
+		  </div>
+		</nav>
+	      </div>
+	      <link rel="stylesheet" type="text/css" href="{% static 'music/main.css' %}"/>
+	      <script type="text/javascript" src="{% static 'music/js/controls.js' %}"></script>
+	    {% endif %}
+	  </ul>
+	</div>
+	<div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-body">
                 <table class="table">
@@ -74,13 +101,16 @@
                         <tbody>
                             {% for song in song_results %}
                             <tr>
-                                <td>
-                                    <audio controls>
-                                        <source src="{{ song.audio_file.url }}" type="audio/mpeg">
-                                        <source src="{{ song.audio_file.url }}" type="audio/ogg; codecs=vorbis">
-                                        Your browser does not support the audio element.
-                                    </audio>
-                                </td>
+                              <td>
+                                <form action="{% url 'music:index' %}" method="post">
+                                    {% csrf_token %}
+				    <input type="hidden" name="songs" value="{{ song_results }}" />
+                                    <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                      <span class="glyphicon glyphicon-play"></span>
+                                    </button>
+                                  </form>
+                              </td>
                                 <td>{{ song.song_title }}</td>
                                 <td>{{ song.album.artist }}</td>
                                 <td>
