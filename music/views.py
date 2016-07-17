@@ -26,7 +26,7 @@ class IndexView(View):
 
     def get(self, request):
         if not request.user.is_authenticated():
-            return redirect('music:login')
+            return render(request, 'music/home.html')
 
         albums = Album.objects.filter(user=request.user)
         song_results = Song.objects.all()
@@ -155,45 +155,43 @@ class AlbumCreate(View):
             album.save()
             albums = Album.objects.filter(user=request.user).order_by('album_title')
             return render(request, 'music/index.html', {'albums': albums})
-        context = {
-            "form": form,
-        }
-        return render(request, self.template_name, context)
+
+        return render(request, self.template_name, {'form': form})
 
 
-def album_update(request, album_id):
+class AlbumUpdateView(View):
     template_name = 'music/album_update_form.html'
 
-    if not request.user.is_authenticated():
-        return redirect('music:login')
+    def get(self, request, album_id):
+        if not request.user.is_authenticated():
+            return redirect('music:login')
 
-    album = Album.objects.get(id=album_id)
-    if request.POST:
+        album = get_object_or_404(Album, id=album_id)
+        form = AlbumForm(instance=album)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, album_id):
+        album = get_object_or_404(Album, id=album_id, user=request.user)
+        existing_logo = album.album_logo.url
         form = AlbumForm(request.POST or None, request.FILES or None, instance=album)
         if form.is_valid():
-            album = form.save(commit=False)
-            album.user = request.user
-            if hasattr(request.POST, 'album_logo'):
-                album.album_logo = request.POST['album_logo']
-            file_type = album.album_logo.url.split('.')[-1]
-            file_type = file_type.lower()
-            if file_type not in settings.IMAGE_FILE_TYPES:
-                context = {
-                    'album': album,
-                    'form': form,
-                    'error_message': 'Image file must be PNG, JPG, or JPEG',
-                }
-                return render(request, template_name, context)
+            form.save(commit=False)
+            if request.FILES:
+                os.system('rm -rf .%s' % existing_logo)
+                file_type = album.album_logo.url.split('.')[-1]
+                file_type = file_type.lower()
+                if file_type not in settings.IMAGE_FILE_TYPES:
+                    context = {
+                        'album': album,
+                        'form': form,
+                        'error_message': 'Image file must be PNG, JPG, or JPEG',
+                    }
+                    return render(request, self.template_name, context)
             album.save()
             albums = Album.objects.filter(user=request.user)
             return render(request, 'music/index.html', {'albums': albums})
-        context = {
-            "form": form,
-        }
-        return render(request, template_name, context)
-    else:
-        form = AlbumForm(instance=album)
-        return render(request, template_name, {'form': form})
+
+        return render(request, self.template_name, {'form': form})
 
 
 class AlbumDelete(View):
@@ -324,27 +322,28 @@ class SongFavoriteView(View):
                           {'album': album, 'filter_by': filter_by})
 
 
-def album_favorite(request, album_id):
-    if not request.user.is_authenticated():
-        return redirect('music:login')
+class AlbumFavoriteView(View):
 
-    albums = Album.objects.filter(user=request.user)
-    album = get_object_or_404(Album, pk=album_id)
-    try:
-        if album.is_favorite:
-            album.is_favorite = False
-        else:
-            album.is_favorite = True
-        album.save()
-    except (KeyError, Album.DoesNotExist):
-        context = {
-            'albums': albums,
-            'error_message': 'Album does not exists.',
-        }
-        return render(request, 'music/index.html', context)
-    else:
+    def get(self, request, album_id):
+        if not request.user.is_authenticated():
+            return redirect('music:login')
+
         albums = Album.objects.filter(user=request.user)
-        return render(request, 'music/index.html', {'albums': albums})
+        album = get_object_or_404(Album, pk=album_id)
+        try:
+            if album.is_favorite:
+                album.is_favorite = False
+            else:
+                album.is_favorite = True
+            album.save()
+        except (KeyError, Album.DoesNotExist):
+            context = {
+                'albums': albums,
+                'error_message': 'Album does not exists.',
+            }
+            return render(request, 'music/index.html', context)
+        else:
+            return render(request, 'music/index.html', {'albums': albums})
 
 
 class UserFormView(View):
@@ -389,9 +388,6 @@ class UserLoginView(View):
         form = self.form_class(request.POST)
         if form.is_valid():
             username = request.POST['username']
-            if not User.objects.filter(username=username):
-                return render(request, self.login_template,
-                              {'form': form, 'error_message': 'Username does not exists.'})
             password = request.POST['password']
             user = authenticate(username=username, password=password)
             if user is not None:
@@ -506,7 +502,7 @@ class ChangePasswordView(View):
                 context = {'form': form,
                            'error_message': 'Current password is incorrect.'}
                 return render(request, self.template_name, context)
-            # import pdb; pdb.set_trace()
+
             if new_password != confirm_password:
                 context = {'form': form,
                            'error_message': 'Password mis-match.'}

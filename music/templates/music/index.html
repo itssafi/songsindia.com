@@ -26,8 +26,8 @@
                         <img src="{{ album.album_logo.url }}" class="img-responsive">
                     </a>
                     <div class="caption">
-                        <h2>{{ album.album_title }}</h2>
-                        <h4>{{ album.artist }}</h4>
+                        <h3>{{ album.album_title }}</h3>
+                        <h5>{{ album.artist }}</h5>
 
                         <!-- Update -->
                         <a href="{% url 'music:album-update' album.id %}" class="btn btn-primary btn-sm">Edit Album</a>
