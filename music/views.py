@@ -56,9 +56,14 @@ class IndexView(View):
                 Q(song_title__icontains=query)
             ).distinct()
             if song_results:
-                return render(request, self.template_name,
-                              {'song_results': song_results,
-                               'audio': str(self.request.POST.get('audio_url'))})
+                context = {
+                    'song_results': song_results,
+                    'audio': str(self.request.POST.get('audio_url')),
+                    'song_title': str(self.request.POST.get('song_title')),
+                    'artist': str(self.request.POST.get('artist')),
+                    'album_title': str(self.request.POST.get('album_title'))
+                }
+                return render(request, self.template_name, context)
 
 class SongView(View):
 
@@ -95,11 +100,15 @@ class SongView(View):
         except Album.DoesNotExist:
             users_songs = []
 
-        return render(request, 'music/songs.html', {
+        context = {
             'all_songs': users_songs,
             'filter_by': filter_by,
-            'audio': str(self.request.POST.get('audio_url'))
-        })
+            'audio': str(self.request.POST.get('audio_url')),
+            'song_title': str(self.request.POST.get('song_title')),
+            'artist': str(self.request.POST.get('artist')),
+            'album_title': str(self.request.POST.get('album_title'))
+        }
+        return render(request, 'music/songs.html', context)
 
 
 class DetailView(View):
@@ -117,9 +126,15 @@ class DetailView(View):
             return redirect('music:login')
 
         album = get_object_or_404(Album, id=album_id, user=request.user)
-        audio = str(self.request.POST.get('audio_url'))
-        return render(request, self.template_name,
-                      {'album': album, 'audio': audio})
+        context = {
+            'album': album,
+            'audio': str(self.request.POST.get('audio_url')),
+            'song_title': str(self.request.POST.get('song_title')),
+            'artist': str(self.request.POST.get('artist')),
+            'album_title': str(self.request.POST.get('album_title'))
+        }
+        return render(request, self.template_name, context)
+
 
 class AlbumCreate(View):
     form_class = AlbumForm
