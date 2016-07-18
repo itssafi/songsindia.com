@@ -38,6 +38,7 @@
                             <source src="{{ audio }}" type="audio/mp3">
                         </audio>
                         <nav>
+			    <marquee>{{ song_title }} - {{ album_title }} - {{ artist }}</marquee>
                             <div id="defaultBar">
                                 <div id="progressBar"></div>
                             </div>
@@ -72,6 +73,9 @@
                                         <form action="{% url 'music:detail' album.id %}" method="post">
 					  {% csrf_token %}
                                             <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
+					    <input type="hidden" name="artist" value="{{ album.artist }}" />
+					    <input type="hidden" name="song_title" value="{{ song.song_title }}" />
+					    <input type="hidden" name="album_title" value="{{ album.album_title }}" />
                                             <button type="submit" class="btn btn-success btn-sm">
                                               <span class="glyphicon glyphicon-play"></span>
                                             </button>
