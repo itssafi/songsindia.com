@@ -61,9 +61,9 @@
                                     <tr>
                                         <td>
                                             {% if filter_by == 'all' %}
-                                                <form action="{% url 'music:songs' 'all' %}" method="post">
+                                                <form action="{% url 'music:songs' 'all' %}" method="post" onsubmit="return playOrPause()">
                                             {% else %}
-                                                <form action="{% url 'music:songs' 'favorites' %}" method="post">
+                                                <form action="{% url 'music:songs' 'favorites' %}" method="post" onsubmit="return playOrPause()">
                                             {% endif %}
                                             {% csrf_token %}
                                             <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
@@ -71,7 +71,11 @@
 					    <input type="hidden" name="song_title" value="{{ song.song_title }}" />
 					    <input type="hidden" name="album_title" value="{{ song.album.album_title }}" />
                                             <button type="submit" class="btn btn-success btn-sm">
-                                              <span class="glyphicon glyphicon-play"></span>
+					      {% if audio and song.song_title == song_title %}
+					      <span class="glyphicon glyphicon-pause"></span>
+					      {% else %}
+					      <span class="glyphicon glyphicon-play"></span>
+					      {% endif %}
                                             </button>
                                                 </form>
                                         </td>
