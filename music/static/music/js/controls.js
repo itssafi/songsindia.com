@@ -21,12 +21,12 @@ bar.addEventListener('click', clickedBar, false);
 function playOrPause() {
     if(!track.paused && !track.ended){
         track.pause();
-        playButton.style.backgroundImage = 'url(../../play.png)';
+        playButton.style.backgroundImage = 'url(/static/play.png)';
         window.clearInterval(updateTime);
     }
     else {
         track.play();
-        playButton.style.backgroundImage = 'url(../../pause.png)';
+        playButton.style.backgroundImage = 'url(/static/pause.png)';
         updateTime = setInterval(update, 500);
     }
 }
@@ -34,11 +34,11 @@ function playOrPause() {
 function muteOrSpeaker() {
     if(track.muted == true){
         track.muted = false;
-        muteButton.style.backgroundImage = 'url(../../speaker.png)';
+        muteButton.style.backgroundImage = 'url(/static/speaker.png)';
     }
     else {
         track.muted = true;
-        muteButton.style.backgroundImage = 'url(../../mute.png)';
+        muteButton.style.backgroundImage = 'url(/static/mute.png)';
     }
 }
 

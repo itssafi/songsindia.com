@@ -1,4 +1,4 @@
-import random, string, os
+import random, string, os, re
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.core.urlresolvers import reverse_lazy
@@ -374,11 +374,11 @@ class UserFormView(View):
     def post(self, request):
         form = self.form_class(request.POST)
         if form.is_valid():
+            import pdb; pdb.set_trace()
             user = form.save(commit=False)
             # Cleaned normalized data
             username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user.set_password(password)
+            password = form.cleaned_data['password1']
             user.save()
             # Returns User objects if credentials are correct
             user = authenticate(username=username, password=password)
@@ -505,28 +505,29 @@ class ChangePasswordView(View):
         if form.is_valid():
             # Cleaned normalized data
             username = form.cleaned_data['username']
-            current_password = form.cleaned_data['current_password']
-            new_password = form.cleaned_data['new_password']
-            confirm_password = form.cleaned_data['confirm_password']
-            if not User.objects.filter(username=username):
+            current_password = form.cleaned_data['password']
+            new_password = form.cleaned_data['password1']
+            user = User.objects.get(username=username)
+            if not user:
                 context = {'form': form,
                            'error_message': 'Username does not exists.'}
                 return render(request, self.template_name, context)
-            user = authenticate(username=username, password=current_password)
-            if not user:
+
+            if not authenticate(username=username, password=current_password):
                 context = {'form': form,
                            'error_message': 'Current password is incorrect.'}
                 return render(request, self.template_name, context)
 
-            if new_password != confirm_password:
+            if current_password == new_password:
                 context = {'form': form,
-                           'error_message': 'Password mis-match.'}
+                           'error_message': "Your new password can't be same with current pasword."}
                 return render(request, self.template_name, context)
+
             user.set_password(new_password)
             user.is_active = True
+            user.save()
             context = {'success_message':
                        'Password has been changed successfully. Please login with the changed password.'}
-            user.save()
             return render(request, self.template_name, context)
         return render(request, self.template_name, {'form': form})
 
