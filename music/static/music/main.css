@@ -33,7 +33,7 @@
     border: none;
     height: 32px;
     width: 32px;
-    background-image: url(../play.png);
+    background-image: url(/static/play.png);
     background-repeat: no-repeat;
     background-position: center;
 }
@@ -43,7 +43,7 @@
     border: none;
     height: 32px;
     width: 32px;
-    background-image: url(../speaker.png);
+    background-image: url(/static/speaker.png);
     background-repeat: no-repeat;
     background-position: center;
 }
@@ -53,7 +53,7 @@
     border: none;
     height: 32px;
     width: 32px;
-    background-image: url(../forward.png);
+    background-image: url(/static/forward.png);
     background-repeat: no-repeat;
     background-position: center;
     align-self: flex-end;
@@ -64,7 +64,7 @@
     border: none;
     height: 32px;
     width: 32px;
-    background-image: url(../backward.png);
+    background-image: url(/static/backward.png);
     background-repeat: no-repeat;
     background-position: center;
     align-self: flex-end;
@@ -75,7 +75,7 @@
     border: none;
     height: 32px;
     width: 32px;
-    background-image: url(../volume-plus.png);
+    background-image: url(/static/volume-plus.png);
     background-repeat: no-repeat;
     background-position: center;
     align-self: flex-end;
@@ -86,7 +86,7 @@
     border: none;
     height: 32px;
     width: 32px;
-    background-image: url(../volume-minus.png);
+    background-image: url(/static/volume-minus.png);
     background-repeat: no-repeat;
     background-position: center;
     align-self: flex-end;
