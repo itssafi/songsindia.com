@@ -18,7 +18,7 @@ from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from .models import Album, Song
 from .forms import UserForm, AlbumForm, SongForm
-from utils.forms.custom_forms import PasswordResetForm, ChangePasswordForm, LoginForm
+from utils.forms.custom_forms import PasswordResetForm, ChangePasswordForm, LoginForm, ChangePasswordFormUnAuth
 
 
 class IndexView(View):
@@ -28,7 +28,7 @@ class IndexView(View):
         if not request.user.is_authenticated():
             return render(request, 'music/home.html')
 
-        albums = Album.objects.filter(user=request.user)
+        albums = Album.objects.filter(user=request.user).order_by('album_title')
         user = get_object_or_404(User, username=request.user)
         song_results = Song.objects.all()
         query = request.GET.get('search')
@@ -43,7 +43,7 @@ class IndexView(View):
             if song_results:
                 request.session['query'] = query
                 return render(request, self.template_name,
-                              {'song_results': song_results, 'user_name': user.first_name})
+                              {'song_results': song_results})
         return render(request, self.template_name,
                       {'albums': albums, 'user_name': user.first_name})
 
@@ -348,7 +348,6 @@ class UserFormView(View):
     def post(self, request):
         form = self.form_class(request.POST)
         if form.is_valid():
-            import pdb; pdb.set_trace()
             user = form.save(commit=False)
             # Cleaned normalized data
             username = form.cleaned_data['username']
@@ -382,12 +381,15 @@ class UserLoginView(View):
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    albums = Album.objects.filter(user=request.user)
+                    albums = Album.objects.filter(user=request.user).order_by('album_title')
                     return render(request, 'music/index.html',
-                                  {'form': form, 'albums': albums})
+                                  {'form': form, 'albums': albums, 'user_name': user.first_name})
                 else:
                     return render(request, self.login_template,
-                                  {'form': form, 'error_message': 'Your account has been disabled'})
+                                  {'form': form,
+                                   'error_message': 'Your account has been disabled. '\
+                                   'Please reset the password with the details sent in your '\
+                                   'email associated with the account or click forget password.'})
             else:
                 return render(request, self.login_template,
                               {'form': form, 'error_message': 'Login failed... username or password is incorrect.'})
@@ -418,7 +420,7 @@ class ForgetPasswordView(View):
         if form.is_valid():
             # Cleaned normalized data
             username = form.cleaned_data['username']
-            email = form.cleaned_data['email_address']
+            email = form.cleaned_data['email']
             if not User.objects.filter(username=username):
                 context = {'form': form,
                            'error_message': 'Username does not exists.'}
@@ -471,38 +473,44 @@ class ChangePasswordView(View):
     template_name = 'music/change_password.html'
 
     def get(self, request):
+        if not request.user.is_authenticated():
+            self.form_class = ChangePasswordFormUnAuth
+            self.template_name = 'music/change_password1.html'
+            form = self.form_class(None)
+            return render(request, self.template_name, {'form': form})
+
         form = self.form_class(None)
         return render(request, self.template_name, {'form': form})
 
     def post(self, request):
+        if not request.user.is_authenticated():
+            self.form_class = ChangePasswordFormUnAuthcated
+            self.template_name = 'music/change_password1.html'
         form = self.form_class(request.POST)
         if form.is_valid():
             # Cleaned normalized data
-            username = form.cleaned_data['username']
             current_password = form.cleaned_data['password']
             new_password = form.cleaned_data['password1']
-            user = User.objects.get(username=username)
-            if not user:
-                context = {'form': form,
-                           'error_message': 'Username does not exists.'}
-                return render(request, self.template_name, context)
-
-            if not authenticate(username=username, password=current_password):
+            if not request.user.is_authenticated():
+                username = form.cleaned_data['username']
+                user = User.objects.get(username=username)
+                auth = authenticate(username=username, password=current_password)
+            else:
+                user = User.objects.get(username=request.user)
+                auth = authenticate(username=request.user, password=current_password)
+            if not auth:
                 context = {'form': form,
                            'error_message': 'Current password is incorrect.'}
-                return render(request, self.template_name, context)
-
-            if current_password == new_password:
-                context = {'form': form,
-                           'error_message': "Your new password can't be same with current pasword."}
                 return render(request, self.template_name, context)
 
             user.set_password(new_password)
             user.is_active = True
             user.save()
-            context = {'success_message':
-                       'Password has been changed successfully. Please login with the changed password.'}
-            return render(request, self.template_name, context)
+            context = {'form': LoginForm(None),
+                       'success_message': 'Password has been changed successfully.'\
+                       ' Please login with the changed password.'}
+            return redirect('music:login')
+            # return render(request, 'music/login.html', context)
         return render(request, self.template_name, {'form': form})
 
 

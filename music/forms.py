@@ -59,7 +59,7 @@ class UserForm(UserCreationForm):
             user = User.objects.get(email__iexact=self.cleaned_data['email'])
         except User.DoesNotExist:
             return self.cleaned_data['email']
-        raise forms.ValidationError(_("The email address already exists. Please try another one."))
+        raise forms.ValidationError(_("The email address already used. Please try another one."))
 
     def save(self, commit=True):
         user = super(UserCreationForm, self).save(commit=False)

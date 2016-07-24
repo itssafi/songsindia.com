@@ -11,8 +11,6 @@ class PasswordResetForm(forms.Form):
 
 
 class ChangePasswordForm(forms.Form):
-    username = forms.CharField(label=_("Username"),
-                               widget=forms.TextInput(attrs=dict(required=True, max_length=15)))
     password = forms.CharField(label=_("Current password"),
                                 widget=forms.PasswordInput(attrs=dict(required=True,
                                                                       max_length=30,
@@ -39,7 +37,15 @@ class ChangePasswordForm(forms.Form):
 
         if self.cleaned_data['password1'] != self.cleaned_data['password2']:
             raise forms.ValidationError(_("The two password fields didn't match."))
+        if self.cleaned_data['password'] == self.cleaned_data['password1']:
+            raise forms.ValidationError(_("Current pasword and new password is same."))
+
         return self.cleaned_data['password1']
+
+
+class ChangePasswordFormUnAuth(ChangePasswordForm):
+    username = forms.CharField(label=_("Username"),
+                               widget=forms.TextInput(attrs=dict(required=True, max_length=15)))
 
 
 class LoginForm(forms.Form):
