@@ -29,6 +29,7 @@ class IndexView(View):
             return render(request, 'music/home.html')
 
         albums = Album.objects.filter(user=request.user)
+        user = get_object_or_404(User, username=request.user)
         song_results = Song.objects.all()
         query = request.GET.get('search')
         if query:
@@ -42,8 +43,9 @@ class IndexView(View):
             if song_results:
                 request.session['query'] = query
                 return render(request, self.template_name,
-                              {'song_results': song_results})
-        return render(request, self.template_name, {'albums': albums})
+                              {'song_results': song_results, 'user_name': user.first_name})
+        return render(request, self.template_name,
+                      {'albums': albums, 'user_name': user.first_name})
 
     def post(self, request):
         if not request.user.is_authenticated():
@@ -64,6 +66,7 @@ class IndexView(View):
                     'album_title': str(self.request.POST.get('album_title'))
                 }
                 return render(request, self.template_name, context)
+
 
 class SongView(View):
 
@@ -157,16 +160,6 @@ class AlbumCreate(View):
         if form.is_valid():
             album = form.save(commit=False)
             album.user = request.user
-            album.album_logo = request.FILES['album_logo']
-            file_type = album.album_logo.url.split('.')[-1]
-            file_type = file_type.lower()
-            if file_type not in settings.IMAGE_FILE_TYPES:
-                context = {
-                    'album': album,
-                    'form': form,
-                    'error_message': 'Image file must be PNG, JPG, or JPEG',
-                }
-                return render(request, self.template_name, context)
             album.save()
             albums = Album.objects.filter(user=request.user).order_by('album_title')
             return render(request, 'music/index.html', {'albums': albums})
@@ -193,15 +186,6 @@ class AlbumUpdateView(View):
             form.save(commit=False)
             if request.FILES:
                 os.system('rm -rf .%s' % existing_logo)
-                file_type = album.album_logo.url.split('.')[-1]
-                file_type = file_type.lower()
-                if file_type not in settings.IMAGE_FILE_TYPES:
-                    context = {
-                        'album': album,
-                        'form': form,
-                        'error_message': 'Image file must be PNG, JPG, or JPEG',
-                    }
-                    return render(request, self.template_name, context)
             album.save()
             albums = Album.objects.filter(user=request.user)
             return render(request, 'music/index.html', {'albums': albums})
@@ -258,16 +242,6 @@ class SongCreate(View):
                     return render(request, self.template_name, context)
             song = form.save(commit=False)
             song.album = album
-            song.audio_file = request.FILES['audio_file']
-            file_type = song.audio_file.url.split('.')[-1]
-            file_type = file_type.lower()
-            if file_type not in settings.AUDIO_FILE_TYPES:
-                context = {
-                    'album': album,
-                    'form': form,
-                    'error_message': 'Audio file must be WAV, MP3, MP4 or OGG',
-                }
-                return render(request, self.template_name, context)
             song.save()
             return render(request, 'music/detail.html', {'album': album})
         context = {
