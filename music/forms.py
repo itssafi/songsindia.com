@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
 from .models import Album, Song
 
 
@@ -58,7 +59,7 @@ class UserForm(UserCreationForm):
             user = User.objects.get(email__iexact=self.cleaned_data['email'])
         except User.DoesNotExist:
             return self.cleaned_data['email']
-        raise forms.ValidationError(_("The email address already exists. Please try another one."))
+        raise forms.ValidationError(_("The email address already used. Please try another one."))
 
     def save(self, commit=True):
         user = super(UserCreationForm, self).save(commit=False)
@@ -75,17 +76,40 @@ class AlbumForm(forms.ModelForm):
                                   widget=forms.TextInput(attrs=dict(required=True, max_length=500)))
     genre = forms.CharField(label=_('Genre'),
                             widget=forms.TextInput(attrs=dict(required=True, max_length=100)))
+    album_logo = forms.FileField(label=_('Album logo'))
 
     class Meta:
         model = Album
         fields = ['artist', 'album_title', 'genre', 'album_logo', 'is_favorite']
 
+    def clean_album_logo(self):
+        album_logo = self.cleaned_data['album_logo']
+        file_type = album_logo.content_type
+        if file_type not in settings.IMAGE_FILE_TYPES:
+            raise forms.ValidationError(_('Image file must be PNG, JPG, or JPEG'))
+
+        file_size = album_logo.size / float(1024**2)
+        if file_size > 2.0:
+            raise forms.ValidationError(_('Maximum album logo file size is 2MB.'))
+        return self.cleaned_data['album_logo']
+
 
 class SongForm(forms.ModelForm):
     song_title = forms.CharField(label=_('Song title'),
                                  widget=forms.TextInput(attrs=dict(required=True, max_length=250)))
+    audio_file = forms.FileField(label=_('Audio file'))
 
     class Meta:
         model = Song
         fields = ['album', 'song_title', 'audio_file', 'is_favorite']
 
+    def clean_audio_file(self):
+        audio_file = self.cleaned_data['audio_file']
+        file_type = audio_file.content_type
+        if file_type not in settings.AUDIO_FILE_TYPES:
+            raise forms.ValidationError(_('Audio file must be WAV, WMA, MP3 or OGG'))
+
+        file_size = audio_file.size / float(1024**2)
+        if file_size > 10.0:
+            raise forms.ValidationError(_('Maximum audio file size is 10MB.'))
+        return self.cleaned_data['audio_file']

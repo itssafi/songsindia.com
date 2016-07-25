@@ -20,30 +20,7 @@
                 <div class="panel panel-default">
                     <div class="panel-body">
                     {% if audio %}
-                    <div id="wrapper">
-                        <audio id="track">
-                            <source src="{{ audio }}" type="audio/mp3">
-                        </audio>
-                        <nav>
-			    <marquee>
-			      {{ song_title }} - {{ album_title }} - {{ artist }}
-			    </marquee>
-                            <div id="defaultBar">
-                                <div id="progressBar"></div>
-                            </div>
-                            <div id="buttons">
-                                <button type="button" id="playButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-                                <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-				<button type="button" id="volumeMinus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-                                <button type="button" id="volumePlus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                <span id="currentTime">00:00</span> /
-                                <span id="fullDuration">00:00</span>
-                            </div>
-                        </nav>
-                    </div>
-                    <link rel="stylesheet" type="text/css" href="{% static 'music/main.css' %}"/>
-                    <script type="text/javascript" src="{% static 'music/js/controls.js' %}"></script>
+		    {% include 'music/audio.html' %}
                     {% endif %}
                         <table class="table">
                             <thead>
@@ -61,16 +38,16 @@
                                     <tr>
                                         <td>
                                             {% if filter_by == 'all' %}
-                                                <form action="{% url 'music:songs' 'all' %}" method="post" onsubmit="return playOrPause()">
+                                                <form action="{% url 'music:songs' 'all' %}" method="post">
                                             {% else %}
-                                                <form action="{% url 'music:songs' 'favorites' %}" method="post" onsubmit="return playOrPause()">
+                                                <form action="{% url 'music:songs' 'favorites' %}" method="post">
                                             {% endif %}
                                             {% csrf_token %}
                                             <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
 					    <input type="hidden" name="artist" value="{{ song.album.artist }}" />
 					    <input type="hidden" name="song_title" value="{{ song.song_title }}" />
 					    <input type="hidden" name="album_title" value="{{ song.album.album_title }}" />
-                                            <button type="submit" class="btn btn-success btn-sm">
+                                            <button type="submit" class="btn btn-success btn-sm" onclick="playOrPause()">
 					      {% if audio and song.song_title == song_title %}
 					      <span class="glyphicon glyphicon-pause"></span>
 					      {% else %}
