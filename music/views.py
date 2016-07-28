@@ -199,7 +199,7 @@ class AlbumDelete(View):
         if not request.user.is_authenticated():
             return redirect('music:login')
 
-        album = Album.objects.get(id=album_id)
+        album = get_object_or_404(Album, id=album_id)
         for song in album.song_set.all():
             os.system('rm -rf .%s' % song.audio_file.url)
 
@@ -256,8 +256,8 @@ class SongDelete(View):
         if not request.user.is_authenticated():
             return redirect('music:login')
 
-        album = get_object_or_404(Album, pk=album_id)
-        song = Song.objects.get(pk=song_id)
+        album = get_object_or_404(Album, id=album_id)
+        song = get_object_or_404(Song, id=song_id)
         os.system('rm -rf .%s' % song.audio_file.url)
         song.delete()
         return render(request, 'music/detail.html', {'album': album})

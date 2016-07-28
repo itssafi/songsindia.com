@@ -12,17 +12,25 @@ class UserForm(UserCreationForm):
                                 help_text=_('Required, 6 to 30 characters in lowercase.'),
                                 widget=forms.TextInput(attrs=dict(required=True, max_length=15)),
                                 error_messages={'invalid': _(
-                                    "Username must contain only letters, 6 to 30 characters in lowercase.") })
+                                    "Username must contain only letters, 6 to 30 characters in lowercase.")})
     first_name = forms.CharField(label=_('First name'),
                                  widget=forms.TextInput(attrs=dict(required=True, max_length=30)))
     last_name = forms.CharField(label=_('Last name'),
                                 widget=forms.TextInput(attrs=dict(required=True, max_length=30)))
     email = forms.EmailField(label=_("Email address"),
                              widget=forms.TextInput(attrs=dict(required=True, max_length=50)))
-    password1 = forms.CharField(label=_("Password"),
-                                widget=forms.PasswordInput(attrs=dict(required=True,
-                                                                      max_length=30,
-                                                                      render_value=False)))
+    pattern = r'^.*(?=.{8,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=]).*$'
+    err_text = """Your password must have all of these:\n\t
+            1. At least 8 characters.\n\t
+            2. Uppercase letter.\n\t
+            3. Lowercase letter.\n\t
+            4. Numeric.\n\t
+            5. Any of the special characters: ! @ # $ % ^ * + = """
+    password1 = forms.RegexField(label=_("Password"), regex=pattern,
+                                 error_messages={'invalid': _(err_text)},
+                                 widget=forms.PasswordInput(attrs=dict(required=True,
+                                                                       max_length=30,
+                                                                       render_value=False)))
     password2 = forms.CharField(label=_("Password confirmation"),
                                 widget=forms.PasswordInput(attrs=dict(required=True,
                                                                       max_length=30,
@@ -40,19 +48,10 @@ class UserForm(UserCreationForm):
         raise forms.ValidationError(_("The username already exists. Please try another one."))
  
     def clean_password2(self):
-        pattern = '^.*(?=.{8,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=]).*$'
-        if not re.findall(pattern, self.cleaned_data['password1']):
-            err_text = """Your password must follow all of these:\n\t
-            1. At least 8 characters.\n\t
-            2. Uppercase letter.\n\t
-            3. Lowercase letter.\n\t
-            4. Numeric.\n\t
-            5. Any of the special characters: ! @ # $ % ^ * + = """
-            raise forms.ValidationError(_(err_text))
-
-        if self.cleaned_data['password1'] != self.cleaned_data['password2']:
-            raise forms.ValidationError(_("The two password fields didn't match."))
-        return self.cleaned_data['password1']
+        if self.cleaned_data.has_key('password1'):
+            if self.cleaned_data['password1'] != self.cleaned_data['password2']:
+                raise forms.ValidationError(_("The two password fields didn't match."))
+            return self.cleaned_data['password1']
 
     def clean_email(self):
         try:
