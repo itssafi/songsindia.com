@@ -484,7 +484,7 @@ class ChangePasswordView(View):
 
     def post(self, request):
         if not request.user.is_authenticated():
-            self.form_class = ChangePasswordFormUnAuthcated
+            self.form_class = ChangePasswordFormUnAuth
             self.template_name = 'music/change_password1.html'
         form = self.form_class(request.POST)
         if form.is_valid():
