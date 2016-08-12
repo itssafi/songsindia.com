@@ -82,15 +82,21 @@ class AlbumForm(forms.ModelForm):
         fields = ['artist', 'album_title', 'genre', 'album_logo', 'is_favorite']
 
     def clean_album_logo(self):
-        album_logo = self.cleaned_data['album_logo']
-        file_type = album_logo.content_type
-        if file_type not in settings.IMAGE_FILE_TYPES:
-            raise forms.ValidationError(_('Image file must be PNG, JPG, or JPEG'))
+        if self.cleaned_data['album_logo']:
+            if hasattr(self.cleaned_data['album_logo'], 'content_type') or 'album_logo' in self.changed_data:
+                album_logo = self.cleaned_data['album_logo']
+                file_type = album_logo.content_type
+                if file_type not in settings.IMAGE_FILE_TYPES:
+                    raise forms.ValidationError(_('Image file must be PNG, JPG, or JPEG'))
 
-        file_size = album_logo.size / float(1024**2)
-        if file_size > 2.0:
-            raise forms.ValidationError(_('Maximum album logo file size is 2MB.'))
-        return self.cleaned_data['album_logo']
+                file_size = album_logo.size / float(1024**2)
+                if file_size > 2.0:
+                    raise forms.ValidationError(_('Maximum album logo file size is 2MB.'))
+                return self.cleaned_data['album_logo']
+
+
+class AlbumFormUpdate(AlbumForm):
+    album_logo = forms.FileField(label=_('Album logo'), required=False)    
 
 
 class SongForm(forms.ModelForm):

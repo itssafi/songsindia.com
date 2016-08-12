@@ -30,6 +30,13 @@
     width: 0px;
 }
 
+#volumeBar{
+    position: absolute;
+    width: 100px;
+    background-color: #3498db;
+    height: 15px;
+}
+
 #playButton{
     background-color: rgb(250, 250, 250);
     border: none;

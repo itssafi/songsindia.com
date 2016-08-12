@@ -17,7 +17,7 @@ from django.db.models import Q
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from .models import Album, Song
-from .forms import UserForm, AlbumForm, SongForm
+from .forms import UserForm, AlbumForm, SongForm, AlbumFormUpdate
 from utils.forms.custom_forms import PasswordResetForm, ChangePasswordForm, LoginForm, ChangePasswordFormUnAuth
 
 
@@ -25,10 +25,12 @@ class IndexView(View):
     template_name = 'music/index.html'
 
     def get(self, request):
+        albums = Album.objects.all()
         if not request.user.is_authenticated():
-            return render(request, 'music/home.html')
+            albums = albums.order_by('album_title')
+            return render(request, 'music/home.html', {'albums': albums})
 
-        albums = Album.objects.filter(user=request.user).order_by('album_title')
+        albums = albums.filter(user=request.user).order_by('album_title')
         user = get_object_or_404(User, username=request.user)
         song_results = Song.objects.all()
         query = request.GET.get('search')
@@ -175,20 +177,21 @@ class AlbumUpdateView(View):
             return redirect('music:login')
 
         album = get_object_or_404(Album, id=album_id)
-        form = AlbumForm(instance=album)
+        form = AlbumFormUpdate(instance=album)
         return render(request, self.template_name, {'form': form})
 
     def post(self, request, album_id):
         album = get_object_or_404(Album, id=album_id, user=request.user)
         existing_logo = album.album_logo.url
-        form = AlbumForm(request.POST or None, request.FILES or None, instance=album)
+        form = AlbumFormUpdate(request.POST or None, request.FILES or None, instance=album)
         if form.is_valid():
             form.save(commit=False)
             if request.FILES:
                 os.system('rm -rf .%s' % existing_logo)
             album.save()
             albums = Album.objects.filter(user=request.user)
-            return render(request, 'music/index.html', {'albums': albums})
+            return render(request, 'music/index.html',
+                {'albums': albums, 'user_name': album.user.first_name})
 
         return render(request, self.template_name, {'form': form})
 
@@ -501,6 +504,10 @@ class ChangePasswordView(View):
             if not auth:
                 context = {'form': form,
                            'error_message': 'Current password is incorrect.'}
+                return render(request, self.template_name, context)
+            if current_password == new_password:
+                context = {'form': form,
+                           'error_message': 'Current pasword and new password is same.'}
                 return render(request, self.template_name, context)
 
             user.set_password(new_password)

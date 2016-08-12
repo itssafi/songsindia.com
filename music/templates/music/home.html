@@ -6,17 +6,34 @@
 {% block body %}
 <div class="container-fluid">
     <div class="row">
-        <div class="col-sm-12 col-md-6">
-            <div class="panel panel-default">
-                <div class="panel-body">
+        <div class="panel-body">
+            {% if albums %}
+                {% for album in albums %}
+                    <div class="col-sm-4 col-sm-2">
+                        <div class="thumbnail">
+                            <!-- Album Logo -->
+                            <a href="{% url 'music:detail' album.id %}">
+                                <img src="{{ album.album_logo.url }}" class="img-responsive" style="width: 150px";>
+                            </a>
+                            <div class="caption">
+                                <h4>{{ album.album_title }}</h4>
+                                <h5>{{ album.artist }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+        </div>
+            <div class="col-sm-12 col-md-6">
+                <div class="panel panel-default">
                     <h3>Welcome to Songs India music application</h3>
                 </div>
-                <div class="panel-footer">
-		    Please <a href="{% url 'music:login' %}">Click here</a> to login.<br/>
-                    Don't have an account? <a href="{% url 'music:register' %}">Click here</a> to register.
-                </div>
             </div>
+        <div class="panel-footer">
+            Please <a href="{% url 'music:login' %}">Click here</a> to login.<br/>
+            Don't have an account? <a href="{% url 'music:register' %}">Click here</a> to register.
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
