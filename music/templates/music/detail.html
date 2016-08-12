@@ -32,77 +32,77 @@
                 </ul>
                 <div class="panel panel-default">
                     <div class="panel-body">
-			{% if audio %}
+        			{% if audio %}
                         {% include 'music/audio.html' %}
-			{% endif %}
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Play Song</th>
-                                    <th>Title</th>
-                                    <th>Favorite</th>
-                                    <th>Download</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for song in album.song_set.all %}
-                                <tr>
-                                    <td>
-                                        <form action="{% url 'music:detail' album.id %}" method="post" onsubmit="return playOrPause()">
-					  {% csrf_token %}
-                                            <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
-					    <input type="hidden" name="artist" value="{{ album.artist }}" />
-					    <input type="hidden" name="song_title" value="{{ song.song_title }}" />
-					    <input type="hidden" name="album_title" value="{{ album.album_title }}" />
-                                            <button type="submit" class="btn btn-success btn-sm">
-					      {% if audio and song.song_title == song_title %}
-					      <span class="glyphicon glyphicon-pause"></span>
-					      {% else %}
-					      <span class="glyphicon glyphicon-play"></span>
-					      {% endif %}
-                                            </button>
-					</form>
-                                    </td>
-                                    <td>{{ song.song_title }}</td>
-                                    <td>
-                                      {% if filter_by == 'all' %}
-				      <form action="{% url 'music:song-favorite' 'all' %}" method="post">
-					{% else %}
-					<form action="{% url 'music:song-favorite' 'favorites' %}" method="post">
-					  {% endif %}
-					  {% csrf_token %}
-					  <input type="hidden" name="song_id" value="{{song.id}}" />
-					  <input type="hidden" name="template" value="detail" />
-                                          <button type="submit" class="btn btn-default btn-xs">
-					    <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
-                                          </button>
-					</form>
-                                    </td>
-                                    <td>
-                                        <a target="_blank" href="{{ song.audio_file.url }}">
-                                            <button type="button" class="btn btn-success btn-xs">
-                                                <span class="glyphicon glyphicon-download"></span>&nbsp; Download
-                                            </button>
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <form action="{% url 'music:song-delete' album.id song.id %}" method="post" style="display: inline;">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="album_id" value="{{ album.id }}" />
-                                            <input type="hidden" name="song_id" value="{{ song.id }}" />
-                                                <button type="submit" class="btn btn-danger btn-xs">
-                                                    <span class="glyphicon glyphicon-remove"></span>&nbsp; Delete
-                                                </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+        			{% endif %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Play Song</th>
+                                <th>Title</th>
+                                <th>Favorite</th>
+                                <th>Download</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for song in album.song_set.all %}
+                        <tr>
+                            <td>
+                                <form action="{% url 'music:detail' album.id %}" method="post"">
+                	            {% csrf_token %}
+                                <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
+                			    <input type="hidden" name="artist" value="{{ album.artist }}" />
+                			    <input type="hidden" name="song_title" value="{{ song.song_title }}" />
+                			    <input type="hidden" name="album_title" value="{{ album.album_title }}" />
+                                <button type="submit" class="btn btn-success btn-sm">
+                			    {% if audio and song.song_title == song_title %}
+                			        <span class="glyphicon glyphicon-pause"></span>
+                			    {% else %}
+                			        <span class="glyphicon glyphicon-play"></span>
+                			    {% endif %}
+                                </button>
+                    			</form>
+                            </td>
+                            <td>{{ song.song_title }}</td>
+                            <td>
+                            {% if filter_by == 'all' %}
+                                <form action="{% url 'music:song-favorite' 'all' %}" method="post">
+                            {% else %}
+			                     <form action="{% url 'music:song-favorite' 'favorites' %}" method="post">
+                            {% endif %}
+				            {% csrf_token %}
+            				<input type="hidden" name="song_id" value="{{song.id}}" />
+            				<input type="hidden" name="template" value="detail" />
+                            <button type="submit" class="btn btn-default btn-xs">
+            				    <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
+                            </button>
+				                </form>
+                            </td>
+                            <td>
+                                <a target="_blank" href="{{ song.audio_file.url }}">
+                                    <button type="button" class="btn btn-success btn-xs">
+                                        <span class="glyphicon glyphicon-download"></span>&nbsp; Download
+                                    </button>
+                                </a>
+                            </td>
+                            <td>
+                                <form action="{% url 'music:song-delete' album.id song.id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="album_id" value="{{ album.id }}" />
+                                <input type="hidden" name="song_id" value="{{ song.id }}" />
+                                <button type="submit" class="btn btn-danger btn-xs">
+                                    <span class="glyphicon glyphicon-remove"></span>&nbsp; Delete
+                                </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}

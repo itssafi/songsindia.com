@@ -164,7 +164,8 @@ class AlbumCreate(View):
             album.user = request.user
             album.save()
             albums = Album.objects.filter(user=request.user).order_by('album_title')
-            return render(request, 'music/index.html', {'albums': albums})
+            return render(request, 'music/index.html',
+                {'albums': albums, 'user_name': album.user.first_name})
 
         return render(request, self.template_name, {'form': form})
 
@@ -209,7 +210,8 @@ class AlbumDelete(View):
         os.system('rm -rf .%s' % album.album_logo.url)
         album.delete()
         albums = Album.objects.filter(user=request.user).order_by('album_title')
-        return render(request, 'music/index.html', {'albums': albums})
+        return render(request, 'music/index.html',
+            {'albums': albums, 'user_name': album.user.first_name})
 
 
 class SongCreate(View):
@@ -293,7 +295,7 @@ class SongFavoriteView(View):
                                'filter_by': filter_by,
                                'error_message': 'Song does not exists'})
             else:
-                return render(request, 'music/index.html',
+                return render(request, 'music/detail.html',
                               {'albums': albums,
                                'filter_by': filter_by,
                                'error_message': 'Song does not exists'})
@@ -331,11 +333,13 @@ class AlbumFavoriteView(View):
         except (KeyError, Album.DoesNotExist):
             context = {
                 'albums': albums,
+                'user_name': album.user.first_name,
                 'error_message': 'Album does not exists.',
             }
             return render(request, 'music/index.html', context)
         else:
-            return render(request, 'music/index.html', {'albums': albums})
+            return render(request, 'music/index.html',
+                {'albums': albums, 'user_name': album.user.first_name})
 
 
 class UserFormView(View):
