@@ -1,5 +1,5 @@
 {% extends 'music/base_visitor.html' %}
-{% block title %}Songs India | Login{% endblock %}
+{% block title %}Songs India | Home{% endblock %}
 {% block home_active %}active{% endblock %}
 {% load staticfiles %}
 <script src="{% static 'music/js/main.js' %}"></script>
@@ -16,23 +16,41 @@
                                 <img src="{{ album.album_logo.url }}" class="img-responsive" style="width: 150px";>
                             </a>
                             <div class="caption">
-                                <h4>{{ album.album_title }}</h4>
+                                <h3>{{ album.album_title }}</h3>
                                 <h5>{{ album.artist }}</h5>
+                                {% if album.user == request.user %}
+                                    <!-- Update -->
+                                    <a href="{% url 'music:album-update' album.id %}" class="btn btn-primary btn-sm">Edit Album</a>
+
+                                    <!-- Delete -->
+                                    <form action="{% url 'music:album-delete' album.id %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="album_id" value="{{ album.id }}" />
+                                        <button type="submit" class="btn btn-default btn-sm">
+                                            <span class="glyphicon glyphicon-trash"></span>
+                                        </button>
+                                    </form>
+
+                                    <!-- Favorite -->
+                                    <a href="{% url 'music:album-favorite' album.id %}" class="btn btn-default btn-sm btn-favorite" role="button">
+                                        <span class="glyphicon glyphicon-star {% if album.is_favorite %}active{% endif %}"></span>
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                 {% endfor %}
             {% else %}
-        </div>
-            <div class="col-sm-12 col-md-6">
-                <div class="panel panel-default">
-                    <h3>Welcome to Songs India music application</h3>
-                </div>
+            <div class="col-sm-12">
+                <br>
+                <a href="{% url 'music:album-add' %}">
+                    <button type="button" class="btn btn-success">
+                        <span class="glyphicon glyphicon-plus"></span>&nbsp; Add an Album
+                    </button>
+                </a>
             </div>
-        <div class="panel-footer">
-            Please <a href="{% url 'music:login' %}">Click here</a> to login.<br/>
-            Don't have an account? <a href="{% url 'music:register' %}">Click here</a> to register.
         </div>
+            
         {% endif %}
     </div>
 </div>

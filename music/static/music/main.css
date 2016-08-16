@@ -9,12 +9,19 @@
     border-bottom-color: #101010;
 }
 
-/*nav{*/
-    /*background-color: #606060;*/
-    /*width: 640px;*/
-    /*padding-bottom: 3px;*/
-    /*border-bottom-color: #101010;*/
-/*}*/
+#wrapper{
+    width: 640px;
+    margin: 10px auto;
+    border: 1px;
+    border-bottom-color: #101010;
+}
+
+#navbar{
+    background-color: #606060;
+    width: 640px;
+    padding-bottom: 3px;
+    border-bottom-color: #101010;
+}
 
 #defaultBar{
     width: 640px;

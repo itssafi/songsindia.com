@@ -3,22 +3,17 @@
     <audio id="track">
         <source src="{{ audio }}" type="audio/mp3">
     </audio>
-    <nav>
-        <marquee>{{ song_title }} - {{ album_title }} - {{ artist }}</marquee>
+    <navbar>
+        <span id="currentTime">00:00</span> / <span id="fullDuration">00:00</span>
+        <span>{{ song_title }} - {{ album_title }} - {{ artist }}</span>
         <div id="defaultBar">
             <div id="progressBar"></div>
         </div>
-        <div id="buttons">
-            <button type="button" id="playButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-            <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-            <button type="button" id="volumeMinus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-<!--             <div id="volumeBar"></div> -->
-            <button type="button" id="volumePlus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span id="currentTime">00:00</span> /
-            <span id="fullDuration">00:00</span>
-        </div>
-    </nav>
+        <button type="button" id="playButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" id="volumeMinus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" id="volumePlus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+    </navbar>
 </div>
 <link rel="stylesheet" type="text/css" href="{% static 'music/main.css' %}"/>
 <script type="text/javascript" src="{% static 'music/js/controls.js' %}"></script>

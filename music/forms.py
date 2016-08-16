@@ -90,8 +90,8 @@ class AlbumForm(forms.ModelForm):
                     raise forms.ValidationError(_('Image file must be PNG, JPG, or JPEG'))
 
                 file_size = album_logo.size / float(1024**2)
-                if file_size > 2.0:
-                    raise forms.ValidationError(_('Maximum album logo file size is 2MB.'))
+                if file_size > 1.5:
+                    raise forms.ValidationError(_('Maximum album logo file size is 1.5MB.'))
                 return self.cleaned_data['album_logo']
 
 
@@ -115,6 +115,6 @@ class SongForm(forms.ModelForm):
             raise forms.ValidationError(_('Audio file must be WAV, WMA, MP3 or OGG'))
 
         file_size = audio_file.size / float(1024**2)
-        if file_size > 10.0:
-            raise forms.ValidationError(_('Maximum audio file size is 10MB.'))
+        if file_size > 7.0:
+            raise forms.ValidationError(_('Maximum audio file size is 7MB.'))
         return self.cleaned_data['audio_file']
