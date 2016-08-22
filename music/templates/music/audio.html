@@ -4,14 +4,26 @@
         <source src="{{ audio }}" type="audio/mp3">
     </audio>
     <navbar>
-        <span id="currentTime">00:00</span> / <span id="fullDuration">00:00</span>
-        <span>{{ song_title }} - {{ album_title }} - {{ artist }}</span>
+        {% if audio %}
+            <marquee>{{ song_title }} - {{ album_title }} - {{ artist }}</marquee>
+        {% else %}
+            <marquee>No song selected to play</marquee>
+        {% endif %}
         <div id="defaultBar">
             <div id="progressBar"></div>
         </div>
+        <span id="currentTime">00:00</span> / <span id="fullDuration">00:00</span>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" id="backwardButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
         <button type="button" id="playButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-        <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" id="forwardButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         <button type="button" id="volumeMinus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
         <button type="button" id="volumePlus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
     </navbar>
 </div>

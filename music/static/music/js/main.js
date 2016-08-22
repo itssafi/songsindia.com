@@ -55,10 +55,10 @@ var SongsListPage = {
 	}
 };
 
-$(document).ready(function() {
-	AlbumsListPage.init();
-	SongsListPage.init();
-});
+// $(document).ready(function() {
+// 	AlbumsListPage.init();
+// 	SongsListPage.init();
+// });
 
 function IsEmpty(){
     username = document.getElementById("id_username").value

@@ -28,4 +28,4 @@ class Song(models.Model):
         return reverse('music:detail', kwargs={'pk': self.album.id})
 
     def __str__(self):
-        return self.song_title + '-' + self.album.artist
+        return self.song_title + ' - ' + self.album.artist

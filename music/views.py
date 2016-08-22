@@ -158,12 +158,31 @@ class DetailView(View):
             album = get_object_or_404(Album, id=album_id)
             context['album'] = album
             context['is_authenticated'] = False
+            context = self.select_next_pre_song(album, context)
             return render(request, 'music/detail_visitor.html', context)
 
         album = get_object_or_404(Album, id=album_id, user=request.user)
         context['album'] = album
         context['is_authenticated'] = True
+        context = self.select_next_pre_song(album, context)
         return render(request, self.template_name, context)
+
+    def select_next_pre_song(self, album, context):
+        pre_song, next_song, is_found = None, None, False
+        for index, song in enumerate(album.song_set.all()):
+            if is_found:
+                context['next_song'] = song
+                break
+            elif song.song_title == context['song_title']:
+                is_found = True
+                context['previous_song'] = pre_song
+                if album.song_set.count() == index + 1:
+                    context['next_song'] = next_song
+                    break
+            else:
+                pre_song = song
+
+        return context
 
 
 class AlbumCreate(View):

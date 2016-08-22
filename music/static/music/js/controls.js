@@ -3,6 +3,8 @@ var playButton = document.getElementById('playButton');
 var muteButton = document.getElementById('muteButton');
 var vPlus = document.getElementById('volumePlus');
 var vMinus = document.getElementById('volumeMinus');
+var backwardButton = document.getElementById('backwardButton');
+var forwardButton = document.getElementById('forwardButton');
 
 var fullDuration = document.getElementById('fullDuration');
 var currentTime = document.getElementById('currentTime');
@@ -16,6 +18,8 @@ muteButton.addEventListener('click', muteOrSpeaker, false);
 bar.addEventListener('click', clickedBar, false);
 vPlus.addEventListener('click', volumePlus, false);
 vMinus.addEventListener('click', volumeMinus, false);
+backwardButton.addEventListener('click', previousSong, false);
+forwardButton.addEventListener('click', nextSong, false);
 
 track.addEventListener('loadeddata', function(){
     fullDuration.innerHTML = pad(parseInt(track.duration/60)) + ':' + pad(parseInt(track.duration%60));
@@ -92,13 +96,49 @@ function volumePlus() {
 
 function volumeMinus() {
     if(track.muted == false && track.volume > 0.1) {
-        track.volume -= 0.1
+        track.volume -= 0.1;
     }
-    else if(track.muted == false && track.volume == 0.1) {
-        track.volume = 0.0
+    else if(track.muted == false && track.volume < 0.1) {
+        track.volume = 0.0;
+        track.muted = true;
         muteButton.style.backgroundImage = 'url(/static/mute.png)';
     }
     else {
         track.volume -= 0.1;
+    }
+}
+
+function postForm(params) {
+    var form = document.getElementById("form");
+    for (var key in params) {
+        if (params.hasOwnProperty(key)) {
+            var hiddenField = document.getElementById(key);
+            hiddenField.value = params[key];
+        }
+    }
+    form.submit();
+}
+
+function previousSong() {
+    var audio_url = document.getElementById("previous_song_url").value;
+    var title = document.getElementById("previous_song_title").value;
+    var artist = document.getElementById("previous_song_artist").value;
+    var album_title = document.getElementById("previous_album_title").value;
+
+    postForm({"audio_url": audio_url, "song_title": title, "artist": artist, "album_title": album_title});
+    window.onload = function() {
+        playOrPause();
+    }
+}
+
+function nextSong() {
+    var audio_url = document.getElementById("next_song_url").value;
+    var title = document.getElementById("next_song_title").value;
+    var artist = document.getElementById("next_song_artist").value;
+    var album_title = document.getElementById("next_album_title").value;
+
+    postForm({"audio_url": audio_url, "song_title": title, "artist": artist, "album_title": album_title});
+    window.onload = function() {
+        playOrPause();
     }
 }
