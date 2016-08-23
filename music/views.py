@@ -131,6 +131,7 @@ class SongView(View):
             'artist': str(self.request.POST.get('artist')),
             'album_title': str(self.request.POST.get('album_title'))
         }
+        context = select_next_pre_song(users_songs, context)
         return render(request, 'music/songs.html', context)
 
 
@@ -158,31 +159,14 @@ class DetailView(View):
             album = get_object_or_404(Album, id=album_id)
             context['album'] = album
             context['is_authenticated'] = False
-            context = self.select_next_pre_song(album, context)
+            context = select_next_pre_song(album.song_set.all(), context)
             return render(request, 'music/detail_visitor.html', context)
 
         album = get_object_or_404(Album, id=album_id, user=request.user)
         context['album'] = album
         context['is_authenticated'] = True
-        context = self.select_next_pre_song(album, context)
+        context = select_next_pre_song(album.song_set.all(), context)
         return render(request, self.template_name, context)
-
-    def select_next_pre_song(self, album, context):
-        pre_song, next_song, is_found = None, None, False
-        for index, song in enumerate(album.song_set.all()):
-            if is_found:
-                context['next_song'] = song
-                break
-            elif song.song_title == context['song_title']:
-                is_found = True
-                context['previous_song'] = pre_song
-                if album.song_set.count() == index + 1:
-                    context['next_song'] = next_song
-                    break
-            else:
-                pre_song = song
-
-        return context
 
 
 class AlbumCreate(View):
@@ -292,7 +276,11 @@ class SongCreate(View):
             song = form.save(commit=False)
             song.album = album
             song.save()
-            return render(request, 'music/detail.html', {'album': album})
+            context = {
+                'album': album,
+                'is_authenticated': True
+            }
+            return render(request, 'music/detail.html', context)
         context = {
             'form': form
         }
@@ -602,3 +590,21 @@ class LoginView(FormView):
          if not is_safe_url(url=redirect_to, host=self.request.get_host()):
              redirect_to = self.success_url
          return redirect_to
+
+
+def select_next_pre_song(songs, context):
+    pre_song, next_song, is_found = None, None, False
+    for index, song in enumerate(songs):
+        if is_found:
+            context['next_song'] = song
+            break
+        elif song.song_title == context['song_title']:
+            is_found = True
+            context['previous_song'] = pre_song
+            if songs.count() == index + 1:
+                context['next_song'] = next_song
+                break
+        else:
+            pre_song = song
+
+    return context

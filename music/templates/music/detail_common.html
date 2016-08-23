@@ -53,7 +53,6 @@
                     			    <input type="hidden" name="artist" id="artist" value="{{ album.artist }}" />
                     			    <input type="hidden" name="song_title" id="song_title" value="{{ song.song_title }}" />
                     			    <input type="hidden" name="album_title" id="album_title" value="{{ album.album_title }}" />
-                                    <input type="hidden" id="album_id" value="{{ album.id }}" />
                                     {% if previous_song %}
                                         <input type="hidden" id="previous_song_url" value="{{previous_song.audio_file.url}}" />
                                         <input type="hidden" id="previous_song_artist" value="{{album.artist}}" />

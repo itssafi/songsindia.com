@@ -47,6 +47,18 @@
                     					    <input type="hidden" name="artist" value="{{ song.album.artist }}" />
                     					    <input type="hidden" name="song_title" value="{{ song.song_title }}" />
                     					    <input type="hidden" name="album_title" value="{{ song.album.album_title }}" />
+                                            {% if previous_song %}
+                                                <input type="hidden" id="previous_song_url" value="{{previous_song.audio_file.url}}" />
+                                                <input type="hidden" id="previous_song_artist" value="{{album.artist}}" />
+                                                <input type="hidden" id="previous_song_title" value="{{previous_song.song_title}}" />
+                                                <input type="hidden" id="previous_album_title" value="{{previous_song.album.album_title}}" />
+                                            {% endif %}
+                                            {% if next_song %}
+                                                <input type="hidden" id="next_song_url" value="{{next_song.audio_file.url}}" />
+                                                <input type="hidden" id="next_song_artist" value="{{album.artist}}" />
+                                                <input type="hidden" id="next_song_title" value="{{next_song.song_title}}" />
+                                                <input type="hidden" id="next_album_title" value="{{next_song.album.album_title}}" />
+                                            {% endif %}
                                             <button type="submit" class="btn btn-success btn-sm">
                                                 {% if audio and song.song_title == song_title %}
                                                     <span class="glyphicon glyphicon-pause"></span>
