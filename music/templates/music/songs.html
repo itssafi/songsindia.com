@@ -38,24 +38,24 @@
                                     <tr>
                                         <td>
                                             {% if filter_by == 'all' %}
-                                                <form action="{% url 'music:songs' 'all' %}" method="post">
+                                                <form action="{% url 'music:songs' 'all' %}" id="form" method="post">
                                             {% else %}
-                                                <form action="{% url 'music:songs' 'favorites' %}" method="post">
+                                                <form action="{% url 'music:songs' 'favorites' %}" id="form" method="post">
                                             {% endif %}
                                             {% csrf_token %}
-                                            <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
-                    					    <input type="hidden" name="artist" value="{{ song.album.artist }}" />
-                    					    <input type="hidden" name="song_title" value="{{ song.song_title }}" />
-                    					    <input type="hidden" name="album_title" value="{{ song.album.album_title }}" />
+                                            <input type="hidden" name="audio_url" id="audio_url" value="{{ song.audio_file.url }}" />
+                    					    <input type="hidden" name="artist" id="artist" value="{{ song.album.artist }}" />
+                    					    <input type="hidden" name="song_title" id="song_title" value="{{ song.song_title }}" />
+                    					    <input type="hidden" name="album_title" id="album_title" value="{{ song.album.album_title }}" />
                                             {% if previous_song %}
                                                 <input type="hidden" id="previous_song_url" value="{{previous_song.audio_file.url}}" />
-                                                <input type="hidden" id="previous_song_artist" value="{{album.artist}}" />
+                                                <input type="hidden" id="previous_song_artist" value="{{previous.album.artist}}" />
                                                 <input type="hidden" id="previous_song_title" value="{{previous_song.song_title}}" />
                                                 <input type="hidden" id="previous_album_title" value="{{previous_song.album.album_title}}" />
                                             {% endif %}
                                             {% if next_song %}
                                                 <input type="hidden" id="next_song_url" value="{{next_song.audio_file.url}}" />
-                                                <input type="hidden" id="next_song_artist" value="{{album.artist}}" />
+                                                <input type="hidden" id="next_song_artist" value="{{next_song.album.artist}}" />
                                                 <input type="hidden" id="next_song_title" value="{{next_song.song_title}}" />
                                                 <input type="hidden" id="next_album_title" value="{{next_song.album.album_title}}" />
                                             {% endif %}
