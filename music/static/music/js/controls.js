@@ -113,6 +113,7 @@ function postForm(params) {
     for (var key in params) {
         if (params.hasOwnProperty(key)) {
             var hiddenField = document.getElementById(key);
+            console.log(key + ':' + params[key]);
             hiddenField.value = params[key];
         }
     }

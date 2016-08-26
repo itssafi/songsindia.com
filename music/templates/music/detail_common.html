@@ -30,7 +30,9 @@
             </ul>
             <div class="panel panel-default">
                 <div class="panel-body">
-                    {% include 'music/audio.html' %}
+                    {% if album.song_set.values %}
+                        {% include 'music/audio.html' %}
+                    {% endif %}
                     <table class="table">
                         <thead>
                             <tr>

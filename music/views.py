@@ -19,6 +19,7 @@ from django.conf import settings
 from .models import Album, Song
 from .forms import UserForm, AlbumForm, SongForm, AlbumFormUpdate
 from utils.forms.custom_forms import PasswordResetForm, ChangePasswordForm, LoginForm, ChangePasswordFormUnAuth
+from utils.send_email import send_email
 
 
 class HomeView(View):
@@ -297,7 +298,8 @@ class SongDelete(View):
         song = get_object_or_404(Song, id=song_id)
         os.system('rm -rf .%s' % song.audio_file.url)
         song.delete()
-        return render(request, 'music/detail.html', {'album': album})
+        return render(request, 'music/detail.html',
+            {'album': album, 'is_authenticated': True})
 
 
 class SongFavoriteView(View):
@@ -330,6 +332,7 @@ class SongFavoriteView(View):
                 return render(request, 'music/detail.html',
                               {'albums': albums,
                                'filter_by': filter_by,
+                               'is_authenticated': True,
                                'error_message': 'Song does not exists'})
         for album in albums:
             for song in album.song_set.all():
@@ -345,7 +348,8 @@ class SongFavoriteView(View):
         else:
             album = get_object_or_404(Album, pk=song.album_id)
             return render(request, 'music/detail.html',
-                          {'album': album, 'filter_by': filter_by})
+                          {'album': album, 'filter_by': filter_by,
+                           'is_authenticated': True})
 
 
 class AlbumFavoriteView(View):
@@ -397,8 +401,14 @@ class UserFormView(View):
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    # send_mail('Welcome to SongsIndia.com', 'Mail body', settings.EMAIL_HOST_NAME,
-                    #           [form.email], fail_silently=True)
+                    subject = 'Welcome to - SongsIndia.com'
+                    email_body = """Hello {0},<br><br>Thank you for register with our 
+                    online music application.<br><br>Your login credentials:<br>
+                    username: {1}<br>password: {2}<br><br>If you like this web site please
+                    share it with you friends.<br><br><br>Thank you,<br>Songs India Team<br>""".format(
+                        form.cleaned_data['first_name'], username, password)
+                    send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
+                        form.cleaned_data['email'], subject, email_body)
                     return redirect('music:index')
         return render(request, self.template_name, {'form': form})
 
@@ -458,6 +468,7 @@ class ForgetPasswordView(View):
         form = self.form_class(request.POST)
         if form.is_valid():
             # Cleaned normalized data
+            import pdb; pdb.set_trace()
             username = form.cleaned_data['username']
             email = form.cleaned_data['email']
             if not User.objects.filter(username=username):
@@ -472,37 +483,26 @@ class ForgetPasswordView(View):
                            'error_message': 'Provided email address does not matching with the username.'}
                 return render(request, self.template_name, context)
 
-            # if not user.is_active:
-            #     context = {'form': form,
-            #                'error_message': 'Your account has been disabled'}
-            #     return render(request, self.template_name, context)
-
             temp_pass = ''.join(random.choice(
                 string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(8))
             user.set_password(temp_pass)
             user.is_active = False
-
-            email_body = """Hello {0},\n\nYour Songs India credentials:\n\n\t
-            Username: {1}\n\tTemporary Password: {2}\n\n
-            Please <a href="{3}/music/change-password/">click here</a>
-            to reset your password\n\n\n\nRegards,\nSongsIndia Team""".format(
-                user.first_name, user.username, temp_pass, self.request.get_host())
-
-            # email_body = """<p>Hello {0}, <br/><br/>Your Songs India credentials:<br/><br/>
-            # Username: {1}<br/>Temporary Password: {2}<br/><br/>
-            # Please <a href="{3}/music/change-password/">click here</a>
-            # to reset your password<br/><br/><br/><br/>Regards,<br/>SongsIndia Team</p>""".format(
-            #     user.first_name, user.username, temp_pass, self.request.get_host())
-            
-            subject = 'Reset Password - SongsIndia.com'
-            # send_mail(subject, email_body, settings.DEFAULT_FROM_EMAIL,
-            #           [email], fail_silently=False)
-            success_message = 'An email has been sent to {0}. Please check its inbox to continue '\
-                              'reset your password({1}).'.format(email, temp_pass)
-            context = {'form': form,
-                       'success_message': email_body
-                       }
             user.save()
+            subject = 'Reset Password - SongsIndia.com'
+            email_body = """Hello {0},<br><br>Your Songs India credentials:<br><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Username: {1}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Temporary Password: {2}<br><br>
+            Please <a href="safiullask.pythonanywhere.com/music/change-password/">click here</a>
+            to reset your password.<br><br><br>Thank you,<br>Songs India Team""".format(
+                user.first_name, user.username, temp_pass)
+
+            success_message = 'An email has been sent to {0}. Please check its inbox to continue '\
+                              'reset your password. {1}'.format(email, temp_pass)
+            context = {'form': form,
+                       'success_message': success_message
+                       }
+            send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
+                form.cleaned_data['email'], subject, email_body)
             return render(request, self.template_name, context)
         return render(request, self.template_name, {'form': form})
 
@@ -525,6 +525,7 @@ class ChangePasswordView(View):
         if not request.user.is_authenticated():
             self.form_class = ChangePasswordFormUnAuth
             self.template_name = 'music/change_password1.html'
+
         form = self.form_class(request.POST)
         if form.is_valid():
             # Cleaned normalized data
@@ -549,47 +550,22 @@ class ChangePasswordView(View):
             user.set_password(new_password)
             user.is_active = True
             user.save()
+
+            subject = 'Password Changed Successfully - SongsIndia.com'
+            email_body = """Hello {0},<br><br>Your password has been changed successfully.
+            Your new Songs India credentials:<br><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Username: {1}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Temporary Password: {2}<br><br>
+            Please<a href="safiullask.pythonanywhere.com/music/login/">click here</a> 
+            to login your account.<br><br><br>
+            Thank You,<br>Songs India Team""".format(user.first_name, user.username, new_password)
+            send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
+                user.email, subject, email_body)
             context = {'form': LoginForm(None),
                        'success_message': 'Password has been changed successfully.'\
                        ' Please login with the changed password.'}
             return redirect('music:login')
-            # return render(request, 'music/login.html', context)
         return render(request, self.template_name, {'form': form})
-
-
-class LoginView(FormView):
-     """
-     Provides the ability to login as a user with a username and password
-     """
-     template_name = 'music/login.html'
-     success_url = '/music/'
-     form_class = AuthenticationForm
-     redirect_field_name = REDIRECT_FIELD_NAME
-
-     @method_decorator(sensitive_post_parameters('password'))
-     @method_decorator(csrf_protect)
-     @method_decorator(never_cache)
-     def dispatch(self, request, *args, **kwargs):
-         # Sets a test cookie to make sure the user has cookies enabled
-         request.session.set_test_cookie()
-
-         return super(LoginView, self).dispatch(request, *args, **kwargs)
-
-     def form_valid(self, form):
-         auth_login(self.request, form.get_user())
-
-         # If the test cookie worked, go ahead and
-         # delete it since its no longer needed
-         if self.request.session.test_cookie_worked():
-             self.request.session.delete_test_cookie()
-
-         return super(LoginView, self).form_valid(form)
-
-     def get_success_url(self):
-         redirect_to = self.request.POST.get(self.redirect_field_name)
-         if not is_safe_url(url=redirect_to, host=self.request.get_host()):
-             redirect_to = self.success_url
-         return redirect_to
 
 
 def select_next_pre_song(songs, context):
