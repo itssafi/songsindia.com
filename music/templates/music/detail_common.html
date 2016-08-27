@@ -38,7 +38,7 @@
                             <tr>
                                 <th>Play Song</th>
                                 <th>Title</th>
-                                {% if is_authenticated %}
+                                {% if is_authenticated and album.user == request.user %}
                                     <th>Favorite</th>
                                     <th>Download</th>
                                     <th>Actions</th>
@@ -77,7 +77,7 @@
                         			</form>
                                 </td>
                                 <td>{{ song.song_title }}</td>
-                                {% if is_authenticated %}
+                                {% if is_authenticated and album.user == request.user %}
                                     <td>
                                     {% if filter_by == 'all' %}
                                         <form action="{% url 'music:song-favorite' 'all' %}" method="post">

@@ -82,7 +82,7 @@
                                 {% for song in song_results %}
                                     <tr>
                                         <td>
-                                            <form action="{% url 'music:index' %}" method="post" onsubmit="return playOrPause()">
+                                            <form action="{% url 'music:index' %}" method="post">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="audio_url" value="{{ song.audio_file.url }}" />
                                                 <input type="hidden" name="song_title" value="{{ song.song_title }}" />
@@ -112,20 +112,26 @@
                                                 </button>
                                             </a>
                                         </td>
-                                        <td>
-                                            {% if filter_by == 'all' %}
-                                                <form action="{% url 'music:song-favorite' 'all' %}" method="post">
-                                            {% else %}
-                                                <form action="{% url 'music:song-favorite' 'favorites' %}" method="post">
-                                            {% endif %}
-                                            {% csrf_token %}
-                                            <input type="hidden" name="song_id" value="{{song.id}}" />
-                                            <input type="hidden" name="template" value="songs" />
-                                            <button type="submit" class="btn btn-default btn-xs">
-                                                <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
-                                            </button>
-                    				            </form>
-                                        </td>
+                                        {% if song.album.user == request.user %}
+                                            <td>
+                                                {% if filter_by == 'all' %}
+                                                    <form action="{% url 'music:song-favorite' 'all' %}" method="post">
+                                                {% else %}
+                                                    <form action="{% url 'music:song-favorite' 'favorites' %}" method="post">
+                                                {% endif %}
+                                                {% csrf_token %}
+                                                <input type="hidden" name="song_id" value="{{song.id}}" />
+                                                <input type="hidden" name="template" value="songs" />
+                                                <button type="submit" class="btn btn-default btn-xs">
+                                                    <span class="glyphicon glyphicon-star {% if song.is_favorite %}active{% endif %}"></span>
+                                                </button>
+                        				            </form>
+                                            </td>
+                                        {% else %}
+                                            <td>
+                                                <span class="glyphicon glyphicon-star inactive">
+                                            </td>
+                                        {% endif %}
                                     </tr>
                                 {% endfor %}
                             </tbody>

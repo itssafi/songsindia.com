@@ -53,7 +53,6 @@ class IndexView(View):
         if not request.user.is_authenticated():
             return render(request, 'music/home.html', {'albums': albums})
 
-        albums = albums.filter(user=request.user)
         user = get_object_or_404(User, username=request.user)
         song_results = Song.objects.all()
         query = request.GET.get('search')
@@ -96,12 +95,13 @@ class SongView(View):
             return redirect('music:login')
         try:
             song_ids = []
-            for album in Album.objects.filter(user=self.request.user):
+            for album in Album.objects.all():
                 for song in album.song_set.all():
                     song_ids.append(song.pk)
             users_songs = Song.objects.filter(pk__in=song_ids).order_by('song_title')
             if filter_by == 'favorites':
-                users_songs = users_songs.filter(is_favorite=True)
+                user_albums = Album.objects.filter(user=request.user)
+                users_songs = users_songs.filter(Q(is_favorite=True) & Q(album__in=user_albums))
         except Album.DoesNotExist:
             users_songs = []
         return render(request, 'music/songs.html', {
@@ -115,12 +115,13 @@ class SongView(View):
 
         try:
             song_ids = []
-            for album in Album.objects.filter(user=self.request.user):
+            for album in Album.objects.all():
                 for song in album.song_set.all():
                     song_ids.append(song.pk)
             users_songs = Song.objects.filter(pk__in=song_ids).order_by('song_title')
             if filter_by == 'favorites':
-                users_songs = users_songs.filter(is_favorite=True)
+                user_albums = Album.objects.filter(user=request.user)
+                users_songs = users_songs.filter(Q(is_favorite=True) & Q(album__in=user_albums))
         except Album.DoesNotExist:
             users_songs = []
 
@@ -145,7 +146,7 @@ class DetailView(View):
             return render(request, 'music/detail_visitor.html',
                 {'album': album, 'is_authenticated': False})
 
-        album = get_object_or_404(Album, id=album_id, user=request.user)
+        album = get_object_or_404(Album, id=album_id)
         return render(request, self.template_name,
             {'album': album, 'is_authenticated': True})
 
@@ -163,7 +164,7 @@ class DetailView(View):
             context = select_next_pre_song(album.song_set.all(), context)
             return render(request, 'music/detail_visitor.html', context)
 
-        album = get_object_or_404(Album, id=album_id, user=request.user)
+        album = get_object_or_404(Album, id=album_id)
         context['album'] = album
         context['is_authenticated'] = True
         context = select_next_pre_song(album.song_set.all(), context)
@@ -192,7 +193,7 @@ class AlbumCreate(View):
             album = form.save(commit=False)
             album.user = request.user
             album.save()
-            albums = Album.objects.filter(user=request.user).order_by('album_title')
+            albums = Album.objects.all().order_by('album_title')
             return render(request, 'music/index.html',
                 {'albums': albums, 'user_name': album.user.first_name})
 
@@ -219,7 +220,7 @@ class AlbumUpdateView(View):
             if request.FILES:
                 os.system('rm -rf .%s' % existing_logo)
             album.save()
-            albums = Album.objects.filter(user=request.user).order_by('album_title')
+            albums = Album.objects.all().order_by('album_title')
             return render(request, 'music/index.html',
                 {'albums': albums, 'user_name': album.user.first_name})
 
@@ -232,13 +233,13 @@ class AlbumDelete(View):
         if not request.user.is_authenticated():
             return redirect('music:login')
 
-        album = get_object_or_404(Album, id=album_id)
+        album = get_object_or_404(Album, id=album_id, user=request.user)
         for song in album.song_set.all():
             os.system('rm -rf .%s' % song.audio_file.url)
 
         os.system('rm -rf .%s' % album.album_logo.url)
         album.delete()
-        albums = Album.objects.filter(user=request.user).order_by('album_title')
+        albums = Album.objects.all().order_by('album_title')
         return render(request, 'music/index.html',
             {'albums': albums, 'user_name': album.user.first_name})
 
@@ -308,7 +309,7 @@ class SongFavoriteView(View):
         if not request.user.is_authenticated():
             return redirect('music:login')
         song_ids = []
-        albums = Album.objects.filter(user=self.request.user)
+        albums = Album.objects.all()
         song_id = request.POST.get('song_id')
         template = request.POST.get('template')
         for album in albums:
@@ -341,7 +342,8 @@ class SongFavoriteView(View):
             if filter_by == 'all':
                 songs = Song.objects.filter(pk__in=song_ids).order_by('song_title')
             else:
-                songs = Song.objects.filter(Q(pk__in=song_ids) & Q(is_favorite=True))
+                user_albums = Album.objects.filter(user=request.user)
+                songs = Song.objects.filter(Q(pk__in=song_ids) & Q(album__in=user_albums) & Q(is_favorite=True))
             return render(request, 'music/songs.html',
                           {'all_songs': songs,
                            'filter_by': filter_by})
@@ -358,7 +360,7 @@ class AlbumFavoriteView(View):
         if not request.user.is_authenticated():
             return redirect('music:login')
 
-        albums = Album.objects.filter(user=request.user).order_by('album_title')
+        albums = Album.objects.all().order_by('album_title')
         album = get_object_or_404(Album, pk=album_id)
         try:
             if album.is_favorite:
@@ -436,7 +438,7 @@ class UserLoginView(View):
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    albums = Album.objects.filter(user=request.user).order_by('album_title')
+                    albums = Album.objects.all().order_by('album_title')
                     return render(request, 'music/index.html',
                                   {'form': form, 'albums': albums, 'user_name': user.first_name})
                 else:
