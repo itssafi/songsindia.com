@@ -1,4 +1,4 @@
-import smtplib
+import smtplib, socket
 
 
 def send_email(from_addr, email_password, to_addr, subject, email_body):
@@ -16,9 +16,10 @@ def send_email(from_addr, email_password, to_addr, subject, email_body):
             print 'Authentication failed'
             print err
             SMTP_SESSION.close()
-    except smtplib.SMTPException, err:
+    except (socket.error, socket.herror, smtplib.SMTPException), err:
         print 'Connection to Gmail failed !.'
         print err
+        return
         
     headers = "\r\n".join(["from: " + 'Songs India Team',
                            "subject: " + subject,

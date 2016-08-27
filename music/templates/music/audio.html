@@ -12,7 +12,11 @@
         <div id="defaultBar">
             <div id="progressBar"></div>
         </div>
-        <img src="{% static 'big-bouncing.gif' %}" class="img-responsive" style="width: 32px; float: left; margin-right: 10px;" />
+        {% if audio %}
+            <img src="{% static 'big-bouncing.gif' %}" class="img-responsive" style="width: 32px; float: left; margin-right: 10px;" />
+        {% else %}
+            <img src="{% static 'static-speaker.jpg' %}" class="img-responsive" style="width: 32px; float: left; margin-right: 10px;" />
+        {% endif %}
         <span id="currentTime">00:00</span> / <span id="fullDuration">00:00</span>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -24,7 +28,11 @@
         <button type="button" id="volumeMinus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
         <button type="button" id="muteButton"></button>&nbsp;&nbsp;&nbsp;&nbsp;
         <button type="button" id="volumePlus"></button>&nbsp;&nbsp;&nbsp;&nbsp;
-        <img src="{% static 'big-bouncing.gif' %}" class="img-responsive" style="width: 32px; float: right; margin-right: 10px;" />
+        {% if audio %}
+            <img src="{% static 'big-bouncing.gif' %}" class="img-responsive" style="width: 32px; float: right; margin-right: 10px;" />
+        {% else %}
+            <img src="{% static 'static-speaker.jpg' %}" class="img-responsive" style="width: 32px; float: right; margin-right: 10px;" />
+        {% endif %}
     </navbar>
 </div>
 <link rel="stylesheet" type="text/css" href="{% static 'music/main.css' %}"/>

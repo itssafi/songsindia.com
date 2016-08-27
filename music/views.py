@@ -395,6 +395,7 @@ class UserFormView(View):
             # Cleaned normalized data
             username = form.cleaned_data['username']
             password = form.cleaned_data['password1']
+            user.set_password(password)
             user.save()
             # Returns User objects if credentials are correct
             user = authenticate(username=username, password=password)
@@ -404,7 +405,7 @@ class UserFormView(View):
                     subject = 'Welcome to - SongsIndia.com'
                     email_body = """Hello {0},<br><br>Thank you for register with our 
                     online music application.<br><br>Your login credentials:<br>
-                    username: {1}<br>password: {2}<br><br>If you like this web site please
+                    Username: {1}<br>Password: {2}<br><br>If you like this web site please
                     share it with you friends.<br><br><br>Thank you,<br>Songs India Team<br>""".format(
                         form.cleaned_data['first_name'], username, password)
                     send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
@@ -418,6 +419,11 @@ class UserLoginView(View):
     login_template = 'music/login.html'
 
     def get(self, request):
+        if request.user.is_authenticated():
+            albums = Album.objects.filter(user=request.user).order_by('album_title')
+            user = get_object_or_404(User, username=request.user)
+            return render(request, 'music/index.html',
+                          {'albums': albums, 'user_name': user.first_name})
         form = self.form_class(None)
         return render(request, self.login_template, {'form': form})
 
@@ -468,7 +474,6 @@ class ForgetPasswordView(View):
         form = self.form_class(request.POST)
         if form.is_valid():
             # Cleaned normalized data
-            import pdb; pdb.set_trace()
             username = form.cleaned_data['username']
             email = form.cleaned_data['email']
             if not User.objects.filter(username=username):
@@ -492,12 +497,12 @@ class ForgetPasswordView(View):
             email_body = """Hello {0},<br><br>Your Songs India credentials:<br><br>
             &nbsp;&nbsp;&nbsp;&nbsp;Username: {1}<br>
             &nbsp;&nbsp;&nbsp;&nbsp;Temporary Password: {2}<br><br>
-            Please <a href="safiullask.pythonanywhere.com/music/change-password/">click here</a>
+            Please <a href="{3}/music/change-password/">click here</a>
             to reset your password.<br><br><br>Thank you,<br>Songs India Team""".format(
-                user.first_name, user.username, temp_pass)
+                user.first_name, user.username, temp_pass, request.get_host())
 
             success_message = 'An email has been sent to {0}. Please check its inbox to continue '\
-                              'reset your password. {1}'.format(email, temp_pass)
+                              'reset your password.'.format(email)
             context = {'form': form,
                        'success_message': success_message
                        }
@@ -555,10 +560,11 @@ class ChangePasswordView(View):
             email_body = """Hello {0},<br><br>Your password has been changed successfully.
             Your new Songs India credentials:<br><br>
             &nbsp;&nbsp;&nbsp;&nbsp;Username: {1}<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;Temporary Password: {2}<br><br>
-            Please<a href="safiullask.pythonanywhere.com/music/login/">click here</a> 
+            &nbsp;&nbsp;&nbsp;&nbsp;New Password: {2}<br><br>
+            Please <a href="{3}/music/login/">click here</a> 
             to login your account.<br><br><br>
-            Thank You,<br>Songs India Team""".format(user.first_name, user.username, new_password)
+            Thank You,<br>Songs India Team""".format(user.first_name,
+                user.username, new_password, request.get_host())
             send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
                 user.email, subject, email_body)
             context = {'form': LoginForm(None),
