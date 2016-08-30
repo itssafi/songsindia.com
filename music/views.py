@@ -1,25 +1,15 @@
-import random, string, os, re
-from django.views import generic
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.core.urlresolvers import reverse_lazy
+import random, string, os
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login
-from django.utils.http import is_safe_url
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import REDIRECT_FIELD_NAME, login as auth_login, logout as auth_logout
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_protect
-from django.views.generic import View, FormView, RedirectView
-from django.views.decorators.debug import sensitive_post_parameters
+from django.contrib.auth import authenticate, login, logout
+from django.views.generic import View, RedirectView
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from .models import Album, Song
 from .forms import UserForm, AlbumForm, SongForm, AlbumFormUpdate
 from utils.forms.custom_forms import PasswordResetForm, ChangePasswordForm, LoginForm, ChangePasswordFormUnAuth
 from utils.send_email import send_email
+from utils.send_sms import SendTextMessage
 
 
 class HomeView(View):
@@ -435,6 +425,10 @@ class UserLoginView(View):
             username = request.POST['username']
             password = request.POST['password']
             user = authenticate(username=username, password=password)
+            # sms = SendTextMessage(settings.TWILIO_SID, settings.TWILIO_TOKEN)
+            # res = sms.validate_phone_number(phone_number)
+            # sms.send_sms(settings.FROM_SMS_NO, phone_number,
+            #     'Hi {0}, Login successful.'.format(user.first_name))
             if user is not None:
                 if user.is_active:
                     login(request, user)
@@ -460,7 +454,7 @@ class LogoutView(RedirectView):
     url = '/music/login/'
 
     def get(self, request, *args, **kwargs):
-        auth_logout(request)
+        logout(request)
         return super(LogoutView, self).get(request, *args, **kwargs)
 
 

@@ -5,6 +5,8 @@ var vPlus = document.getElementById('volumePlus');
 var vMinus = document.getElementById('volumeMinus');
 var backwardButton = document.getElementById('backwardButton');
 var forwardButton = document.getElementById('forwardButton');
+var speakerButton1 = document.getElementById('speaker1');
+var speakerButton2 = document.getElementById('speaker2');
 
 var fullDuration = document.getElementById('fullDuration');
 var currentTime = document.getElementById('currentTime');
@@ -20,21 +22,31 @@ vPlus.addEventListener('click', volumePlus, false);
 vMinus.addEventListener('click', volumeMinus, false);
 backwardButton.addEventListener('click', previousSong, false);
 forwardButton.addEventListener('click', nextSong, false);
+getFullDuration();
 
-track.addEventListener('loadeddata', function(){
-    fullDuration.innerHTML = pad(parseInt(track.duration/60)) + ':' + pad(parseInt(track.duration%60));
-});
+function getFullDuration() {
+    track.addEventListener('loadeddata', function() {
+        fullDuration.innerHTML = pad(parseInt(track.duration/60)) + ':' + pad(parseInt(track.duration%60));
+    });
+}
 
 function playOrPause() {
-    if(!track.paused && !track.ended){
+    if (track == "") {
+        playButton.disabled = true;
+        return false;
+    }
+    if (!track.paused && !track.ended) {
         track.pause();
         playButton.style.backgroundImage = 'url(/static/play.png)';
+        speakerButton1.style.backgroundImage = 'url(/static/static-speaker.png)';
+        speakerButton2.style.backgroundImage = 'url(/static/static-speaker.png)';
         window.clearInterval(updateTime);
     }
     else {
         track.play();
-        track.volume = 0.7;
         playButton.style.backgroundImage = 'url(/static/pause.png)';
+        speakerButton1.style.backgroundImage = 'url(/static/speaker-vibrating.gif)';
+        speakerButton2.style.backgroundImage = 'url(/static/speaker-vibrating.gif)';
         updateTime = setInterval(update, 500);
     }
 }
@@ -61,6 +73,8 @@ function update() {
     else {
         currentTime.innerHTML = "00:00";
         playButton.style.backgroundImage = 'url(/static/play.png)';
+        speakerButton1.style.backgroundImage = 'url(/static/static-speaker.png)';
+        speakerButton2.style.backgroundImage = 'url(/static/static-speaker.png)';
         progressBar.style.width = '0px';
         window.clearInterval(updateTime);
     }
@@ -125,7 +139,10 @@ function previousSong() {
     var title = document.getElementById("previous_song_title").value;
     var artist = document.getElementById("previous_song_artist").value;
     var album_title = document.getElementById("previous_album_title").value;
-
+    if (audio_url.length == 0) {
+        backwardButton.disabled = true;
+        return false;
+    }
     postForm({"audio_url": audio_url, "song_title": title, "artist": artist, "album_title": album_title});
     window.onload = function() {
         playOrPause();
@@ -137,7 +154,10 @@ function nextSong() {
     var title = document.getElementById("next_song_title").value;
     var artist = document.getElementById("next_song_artist").value;
     var album_title = document.getElementById("next_album_title").value;
-
+        if (audio_url.length == 0) {
+        forwardButton.disabled = true;
+        return false;
+    }
     postForm({"audio_url": audio_url, "song_title": title, "artist": artist, "album_title": album_title});
     window.onload = function() {
         playOrPause();

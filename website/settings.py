@@ -132,8 +132,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
 
-ADMIN_MEDIA_PREFIX = '/static/admin/'
-
 # Email config
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
@@ -142,3 +140,11 @@ EMAIL_HOST_NAME = 'songs.india.team@gmail.com'
 EMAIL_HOST_PASSWORD = 'etoqduytbzqkcjpm'
 EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = EMAIL_HOST_NAME
+
+# SMS config
+TWILIO_SID = 'AC1d66923fa66779f6d4c271756856fc38'
+TWILIO_TOKEN = '4d9de98bf2286dc8441969efaa8fbbfb'
+FROM_SMS_NO = '+12187555715'
+
+TEST_SID = 'AC16f023537850abb5a37660c902eb61b5'
+TEST_TOKEN = '4a8f78dd296ddbfb461a12e5c858e7e7'

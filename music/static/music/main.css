@@ -108,12 +108,23 @@
     align-self: flex-end;
 }
 
-#speaker{
+#speaker1{
     background-color: rgb(250, 250, 250);
     border: none;
     height: 32px;
     width: 32px;
-    background-image: url(/static/static-speaker.jpg);
+    background-image: url(/static/static-speaker.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    align-self: flex-end;
+}
+
+#speaker2{
+    background-color: rgb(250, 250, 250);
+    border: none;
+    height: 32px;
+    width: 32px;
+    background-image: url(/static/static-speaker.png);
     background-repeat: no-repeat;
     background-position: center;
     align-self: flex-end;

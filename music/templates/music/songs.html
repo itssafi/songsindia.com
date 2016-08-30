@@ -5,7 +5,6 @@
 <link rel="stylesheet" type="text/css" href="{% static 'music/main.css' %}"/>
 <script type="text/javascript" src="{% static 'music/js/controls.js' %}"></script>
 {% block body %}
-    {% if all_songs %}
     <div class="container-fluid songs-container">
         <div class="row">
             <div class="col-sm-12">
@@ -17,6 +16,7 @@
                 </ul>
             </div>
         </div>
+        {% if all_songs %}
         <div>
             <div class="col-sm-12">
                 <div class="panel panel-default">
@@ -111,15 +111,15 @@
                 </div>
             </div>
         </div>
+        {% else %}
     </div>
-    {% else %}
     <div class="col-sm-12">
-        <br>&nbsp;&nbsp;&nbsp;
-        <a href="{% url 'music:song-add' %}">
-            <button type="button" class="btn btn-success">
-                <span class="glyphicon glyphicon-plus"></span>&nbsp; Add an Song
-            </button>
-        </a>
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <br>&nbsp;&nbsp;&nbsp;
+                No favorite song added.
+            </div>
+        </div>
     </div>
     {% endif %}
 {% endblock %}
