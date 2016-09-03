@@ -53,8 +53,9 @@ class ChangePasswordFormUnAuth(ChangePasswordForm):
 
 class LoginForm(forms.Form):
     username = forms.CharField(label=_("Username"),
-                               widget=forms.TextInput(attrs=dict(required=True, max_length=15)))
+                               widget=forms.TextInput(attrs=dict(required=True,
+                                max_length=15, placeholder='Enter username')))
     password = forms.CharField(label=_("Password"),
                                 widget=forms.PasswordInput(attrs=dict(required=True,
-                                                                      max_length=30,
-                                                                      render_value=False)))
+                                    max_length=30, render_value=False,
+                                    placeholder='Enter password')))

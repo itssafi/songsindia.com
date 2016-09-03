@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
 from django.db import models
 from django.core.urlresolvers import reverse
 
@@ -29,3 +29,9 @@ class Song(models.Model):
 
     def __str__(self):
         return self.song_title + ' - ' + self.album.artist
+
+
+# class CustomUser(AbstractUser):
+#     user = models.ForeignKey(User, default=1)
+#     phone_number = models.CharField(max_length=15)
+#     email = models.ForeignKey(User, default=1)

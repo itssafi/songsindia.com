@@ -1,4 +1,4 @@
-import random, string, os
+import random, string, os, logging, platform, time
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.views.generic import View, RedirectView
@@ -7,9 +7,12 @@ from django.db.models import Q
 from django.conf import settings
 from .models import Album, Song
 from .forms import UserForm, AlbumForm, SongForm, AlbumFormUpdate
-from utils.forms.custom_forms import PasswordResetForm, ChangePasswordForm, LoginForm, ChangePasswordFormUnAuth
+from utils.forms.custom_forms import (PasswordResetForm, ChangePasswordForm,
+    LoginForm, ChangePasswordFormUnAuth)
 from utils.send_email import send_email
 from utils.send_sms import SendTextMessage
+
+log = logging.getLogger(__name__)
 
 
 class HomeView(View):
@@ -36,6 +39,7 @@ class IndexView(View):
         albums = Album.objects.all().order_by('album_title')
         query = request.GET.get('search')
         if query:
+            log.info('searching for: %s' % query)
             albums = albums.filter(
                 Q(album_title__icontains=query) |
                 Q(artist__icontains=query)
@@ -83,6 +87,7 @@ class SongView(View):
     def get(self, request, filter_by):
         if not self.request.user.is_authenticated():
             return redirect('music:login')
+
         try:
             song_ids = []
             for album in Album.objects.all():
@@ -121,7 +126,8 @@ class SongView(View):
             'audio': str(self.request.POST.get('audio_url')),
             'song_title': str(self.request.POST.get('song_title')),
             'artist': str(self.request.POST.get('artist')),
-            'album_title': str(self.request.POST.get('album_title'))
+            'album_title': str(self.request.POST.get('album_title')),
+            'audio_volume': str(self.request.POST.get('audio_volume'))
         }
         context = select_next_pre_song(users_songs, context)
         return render(request, 'music/songs.html', context)
@@ -146,6 +152,7 @@ class DetailView(View):
             'song_title': str(self.request.POST.get('song_title')),
             'artist': str(self.request.POST.get('artist')),
             'album_title': str(self.request.POST.get('album_title')),
+            'audio_volume': str(self.request.POST.get('audio_volume'))
         }
         if not request.user.is_authenticated():
             album = get_object_or_404(Album, id=album_id)
@@ -184,8 +191,7 @@ class AlbumCreate(View):
             album.user = request.user
             album.save()
             albums = Album.objects.all().order_by('album_title')
-            return render(request, 'music/index.html',
-                {'albums': albums, 'user_name': album.user.first_name})
+            return redirect('music:index')
 
         return render(request, self.template_name, {'form': form})
 
@@ -208,11 +214,18 @@ class AlbumUpdateView(View):
         if form.is_valid():
             form.save(commit=False)
             if request.FILES:
-                os.system('rm -rf .%s' % existing_logo)
+                if platform.system() == 'Windows':
+                    album_image = existing_logo.split('/')[-1]
+                    is_deleted = os.system('cd media && del {0}'.format(album_image))
+                else:
+                    is_deleted = os.system('rm -rf .%s' % existing_logo)
+                success_msg = "Old Album logo: '{0}' is removed successfully.".format(
+                    existing_logo)
+                fail_msg = "Old Album logo: '{0}' is not removed successfully.".format(
+                    existing_logo)
+                log_in_file(is_deleted, success_msg, fail_msg)
             album.save()
-            albums = Album.objects.all().order_by('album_title')
-            return render(request, 'music/index.html',
-                {'albums': albums, 'user_name': album.user.first_name})
+            return redirect('music:index')
 
         return render(request, self.template_name, {'form': form})
 
@@ -224,14 +237,34 @@ class AlbumDelete(View):
             return redirect('music:login')
 
         album = get_object_or_404(Album, id=album_id, user=request.user)
+        log.info('Operating system: {0}'.format(platform.system()))
+        # Deleting all songs under the album
         for song in album.song_set.all():
-            os.system('rm -rf .%s' % song.audio_file.url)
+            if platform.system() == 'Windows':
+                song_file = song.audio_file.url.split('/')[-1]
+                is_deleted = os.system('cd media && del {0}'.format(song_file))
+            else:
+                is_deleted = os.system('rm -rf .%s' % song.audio_file.url)
+            success_msg = "Audio file: '{0}' is removed successfully.".format(
+                song.audio_file.url)
+            fail_msg = "Audio file: '{0}' is not deleted.".format(
+                song.audio_file.url)
+            log_in_file(is_deleted, success_msg, fail_msg)
+            song.delete()
 
-        os.system('rm -rf .%s' % album.album_logo.url)
+        # Deleting album
+        if platform.system() == 'Windows':
+            album_image = album.album_logo.url.split('/')[-1]
+            is_deleted = os.system('cd media && del {0}'.format(album_image))
+        else:
+            is_deleted = os.system('rm -rf .%s' % album.album_logo.url)
+        success_msg = "Album logo: '{0}' is removed successfully.".format(
+            album.album_logo.url)
+        fail_msg = "Album logo: '{0}' is not deleted.".format(
+            album.album_logo.url)
+        log_in_file(is_deleted, success_msg, fail_msg)
         album.delete()
-        albums = Album.objects.all().order_by('album_title')
-        return render(request, 'music/index.html',
-            {'albums': albums, 'user_name': album.user.first_name})
+        return redirect('music:index')
 
 
 class SongCreate(View):
@@ -287,7 +320,18 @@ class SongDelete(View):
 
         album = get_object_or_404(Album, id=album_id)
         song = get_object_or_404(Song, id=song_id)
-        os.system('rm -rf .%s' % song.audio_file.url)
+        log.info('Operating system: {0}'.format(platform.system()))
+        # Deleting song
+        if platform.system() == 'Windows':
+            song_file = song.audio_file.url.split('/')[-1]
+            is_deleted = os.system('cd media && del {0}'.format(song_file))
+        else:
+            is_deleted = os.system('rm -rf .%s' % song.audio_file.url)
+        success_msg = "Audio file: '{0}' is removed successfully.".format(
+            song.audio_file.url)
+        fail_msg = "Audio file: '{0}' is not deleted.".format(
+            song.audio_file.url)
+        log_in_file(is_deleted, success_msg, fail_msg)
         song.delete()
         return render(request, 'music/detail.html',
             {'album': album, 'is_authenticated': True})
@@ -305,7 +349,7 @@ class SongFavoriteView(View):
         for album in albums:
             for song in album.song_set.all():
                 song_ids.append(song.pk)
-        songs = Song.objects.filter(pk__in=song_ids)
+        songs = Song.objects.filter(pk__in=song_ids).order_by('song_title')
         song = get_object_or_404(Song, pk=song_id)
         try:
             if song.is_favorite:
@@ -333,7 +377,8 @@ class SongFavoriteView(View):
                 songs = Song.objects.filter(pk__in=song_ids).order_by('song_title')
             else:
                 user_albums = Album.objects.filter(user=request.user)
-                songs = Song.objects.filter(Q(pk__in=song_ids) & Q(album__in=user_albums) & Q(is_favorite=True))
+                songs = Song.objects.filter(
+                    Q(pk__in=song_ids) & Q(album__in=user_albums) & Q(is_favorite=True))
             return render(request, 'music/songs.html',
                           {'all_songs': songs,
                            'filter_by': filter_by})
@@ -366,8 +411,7 @@ class AlbumFavoriteView(View):
             }
             return render(request, 'music/index.html', context)
         else:
-            return render(request, 'music/index.html',
-                {'albums': albums, 'user_name': album.user.first_name})
+            return redirect('music:index')
 
 
 class UserFormView(View):
@@ -387,22 +431,42 @@ class UserFormView(View):
             # Cleaned normalized data
             username = form.cleaned_data['username']
             password = form.cleaned_data['password1']
+            phone_number = form.cleaned_data['phone_number']
             user.set_password(password)
             user.save()
+
+            sms = SendTextMessage(settings.TWILIO_SID, settings.TWILIO_TOKEN)
+            sms_code = sms.validate_phone_number(phone_number)
+
+            if sms_code:
+                log.info('Phone verification for {0}: {1}'.format(phone_number, sms_code))
+                return render(request, self.template_name,
+                    {'form': form, 'phone_code': sms_code})
+            # Formatting text message data
+            sms_message = """Hi {0}, You have successfully registered with 
+            online music app.\nPlease login to {1}/music/login/\n\n
+            Thank you,\nSongs India Team""".format(
+                form.cleaned_data['first_name'], request.get_host())
+            # Sending text message to proviede phone number
+            sms.send_sms(settings.FROM_SMS_NO, phone_number, sms_message)
+            # Formatting email data
+            subject = 'Welcome to - SongsIndia.com'
+            email_body = """Hello {0},<br><br>Thank you for register with our 
+                online music application.<br><br>Your login credentials:<br>
+                Username: {1}<br>Password: {2}<br><br> 
+                If you like this web site please
+                share it with you friends.<br><br><br>Thank you,<br>Songs India Team<br>""".format(
+                    form.cleaned_data['first_name'], username, password)
+            # Sending email to proviede email ID
+            send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
+                form.cleaned_data['email'], subject, email_body)
             # Returns User objects if credentials are correct
             user = authenticate(username=username, password=password)
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    subject = 'Welcome to - SongsIndia.com'
-                    email_body = """Hello {0},<br><br>Thank you for register with our 
-                    online music application.<br><br>Your login credentials:<br>
-                    Username: {1}<br>Password: {2}<br><br>If you like this web site please
-                    share it with you friends.<br><br><br>Thank you,<br>Songs India Team<br>""".format(
-                        form.cleaned_data['first_name'], username, password)
-                    send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
-                        form.cleaned_data['email'], subject, email_body)
                     return redirect('music:index')
+
         return render(request, self.template_name, {'form': form})
 
 
@@ -425,16 +489,11 @@ class UserLoginView(View):
             username = request.POST['username']
             password = request.POST['password']
             user = authenticate(username=username, password=password)
-            # sms = SendTextMessage(settings.TWILIO_SID, settings.TWILIO_TOKEN)
-            # res = sms.validate_phone_number(phone_number)
-            # sms.send_sms(settings.FROM_SMS_NO, phone_number,
-            #     'Hi {0}, Login successful.'.format(user.first_name))
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    albums = Album.objects.all().order_by('album_title')
-                    return render(request, 'music/index.html',
-                                  {'form': form, 'albums': albums, 'user_name': user.first_name})
+                    log.debug("'{0}' logged in successfully.".format(username))
+                    return redirect('music:index')
                 else:
                     return render(request, self.login_template,
                                   {'form': form,
@@ -489,6 +548,7 @@ class ForgetPasswordView(View):
             user.set_password(temp_pass)
             user.is_active = False
             user.save()
+            # Formatting email data to Reset password
             subject = 'Reset Password - SongsIndia.com'
             email_body = """Hello {0},<br><br>Your Songs India credentials:<br><br>
             &nbsp;&nbsp;&nbsp;&nbsp;Username: {1}<br>
@@ -586,3 +646,10 @@ def select_next_pre_song(songs, context):
             pre_song = song
 
     return context
+
+
+def log_in_file(is_deleted, success_msg='', fail_msg=''):
+    if not is_deleted:
+        log.debug(success_msg)
+    else:
+        log.debug(fail_msg)

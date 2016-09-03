@@ -10,15 +10,19 @@ from .models import Album, Song
 class UserForm(UserCreationForm):
     username = forms.RegexField(label=_("Username"), regex=r'^.*(?=.{6,})(?=.*[a-z]).*$',
                                 help_text=_('Required, 6 to 30 characters in lowercase.'),
-                                widget=forms.TextInput(attrs=dict(required=True, max_length=15)),
+                                widget=forms.TextInput(attrs=dict(required=True,
+                                    max_length=15, placeholder='Username')),
                                 error_messages={'invalid': _(
                                     "Username must contain only letters, 6 to 30 characters in lowercase.")})
     first_name = forms.CharField(label=_('First name'),
-                                 widget=forms.TextInput(attrs=dict(required=True, max_length=30)))
+                                 widget=forms.TextInput(attrs=dict(required=True,
+                                    max_length=30, placeholder='First name')))
     last_name = forms.CharField(label=_('Last name'),
-                                widget=forms.TextInput(attrs=dict(required=True, max_length=30)))
+                                widget=forms.TextInput(attrs=dict(required=True,
+                                    max_length=30, placeholder='Last name')))
     email = forms.EmailField(label=_("Email address"),
-                             widget=forms.TextInput(attrs=dict(required=True, max_length=50)))
+                             widget=forms.TextInput(attrs=dict(required=True,
+                                max_length=50,  placeholder='Enter your Email ID')))
     pattern = r'^.*(?=.{8,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=]).*$'
     err_text = """Your password must have all of these:\n\t
             1. At least 8 characters.\n\t
@@ -26,19 +30,27 @@ class UserForm(UserCreationForm):
             3. Lowercase letter.\n\t
             4. Numeric.\n\t
             5. Any of the special characters: ! @ # $ % ^ * + = """
+    phone_number = forms.RegexField(label=_("Phone number"),
+                                    regex=r'^([+][0-9]{1,3})([0-9]{10,11})$',
+                                    widget=forms.TextInput(attrs=dict(required=True,
+                                        max_length=15, placeholder='+910123456789')),
+                                    error_messages={'invalid': _(
+                                        "Phone number must be entered with country code. Up to 15 digits allowed.")})
     password1 = forms.RegexField(label=_("Password"), regex=pattern,
                                  error_messages={'invalid': _(err_text)},
                                  widget=forms.PasswordInput(attrs=dict(required=True,
                                                                        max_length=30,
-                                                                       render_value=False)))
+                                                                       render_value=False,
+                                                                        placeholder='Password')))
     password2 = forms.CharField(label=_("Password confirmation"),
                                 widget=forms.PasswordInput(attrs=dict(required=True,
                                                                       max_length=30,
-                                                                      render_value=False)))
+                                                                      render_value=False,
+                                                                       placeholder='Password Confirmation')))
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'password1']
+        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 'password1']
 
     def clean_username(self):
         try:
@@ -60,8 +72,16 @@ class UserForm(UserCreationForm):
             return self.cleaned_data['email']
         raise forms.ValidationError(_("The email address already used. Please try another one."))
 
+    def clean_phone_number(self):
+        try:
+            user = User.objects.get(email__iexact=self.cleaned_data['phone_number'])
+        except User.DoesNotExist:
+            return self.cleaned_data['phone_number']
+        raise forms.ValidationError(_("The phone number already used. Please try another one."))
+
     def save(self, commit=True):
         user = super(UserCreationForm, self).save(commit=False)
+        user.phone_number = self.cleaned_data['phone_number']
         user.set_password(self.cleaned_data['password1'])
         if commit:
             user.save()

@@ -47,6 +47,11 @@
                     					    <input type="hidden" name="artist" id="artist" value="{{ song.album.artist }}" />
                     					    <input type="hidden" name="song_title" id="song_title" value="{{ song.song_title }}" />
                     					    <input type="hidden" name="album_title" id="album_title" value="{{ song.album.album_title }}" />
+                                            {% if audio_volume %}
+                                                <input type="hidden" name="audio_volume" id="audio_volume" value="{{ audio_volume }}" />
+                                            {% else %}
+                                                <input type="hidden" name="audio_volume" id="audio_volume" value="0.5" />
+                                            {% endif %}
                                             {% if previous_song %}
                                                 <input type="hidden" id="previous_song_url" value="{{previous_song.audio_file.url}}" />
                                                 <input type="hidden" id="previous_song_artist" value="{{previous.album.artist}}" />
@@ -117,7 +122,7 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <br>&nbsp;&nbsp;&nbsp;
-                No favorite song added.
+                No song added yet.
             </div>
         </div>
     </div>
