@@ -31,6 +31,8 @@ track.addEventListener('loadeddata', function(){
 
 window.onload = function () {
 	if (track.currentSrc != "") {
+	    trackVolume = parseFloat(document.getElementById('audio_volume').value);
+        track.volume = trackVolume
 		playOrPause();
 	}
 }
@@ -48,8 +50,6 @@ function playOrPause() {
     }
     else {
         track.play();
-        trackVolume = parseFloat(document.getElementById('audio_volume').value);
-        track.volume = trackVolume
         playButton.style.backgroundImage = 'url(/static/pause.png)';
         speakerButton1.style.backgroundImage = 'url(/static/speaker-vibrating.gif)';
         speakerButton2.style.backgroundImage = 'url(/static/speaker-vibrating.gif)';

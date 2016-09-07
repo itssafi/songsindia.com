@@ -1,4 +1,4 @@
-import random, string, os, logging, platform, time
+import random, string, os, logging, platform
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.views.generic import View, RedirectView
@@ -176,7 +176,7 @@ class AlbumCreate(View):
     def get(self, request):
         if not request.user.is_authenticated():
             return redirect('music:login')
-        
+
         form = self.form_class(None)
         return render(request, self.template_name, {'form': form})
 
@@ -190,7 +190,6 @@ class AlbumCreate(View):
             album = form.save(commit=False)
             album.user = request.user
             album.save()
-            albums = Album.objects.all().order_by('album_title')
             return redirect('music:index')
 
         return render(request, self.template_name, {'form': form})
@@ -214,16 +213,7 @@ class AlbumUpdateView(View):
         if form.is_valid():
             form.save(commit=False)
             if request.FILES:
-                if platform.system() == 'Windows':
-                    album_image = existing_logo.split('/')[-1]
-                    is_deleted = os.system('cd media && del {0}'.format(album_image))
-                else:
-                    is_deleted = os.system('rm -rf .%s' % existing_logo)
-                success_msg = "Old Album logo: '{0}' is removed successfully.".format(
-                    existing_logo)
-                fail_msg = "Old Album logo: '{0}' is not removed successfully.".format(
-                    existing_logo)
-                log_in_file(is_deleted, success_msg, fail_msg)
+                remove_file_logging(existing_logo)
             album.save()
             return redirect('music:index')
 
@@ -237,32 +227,13 @@ class AlbumDelete(View):
             return redirect('music:login')
 
         album = get_object_or_404(Album, id=album_id, user=request.user)
-        log.info('Operating system: {0}'.format(platform.system()))
         # Deleting all songs under the album
         for song in album.song_set.all():
-            if platform.system() == 'Windows':
-                song_file = song.audio_file.url.split('/')[-1]
-                is_deleted = os.system('cd media && del {0}'.format(song_file))
-            else:
-                is_deleted = os.system('rm -rf .%s' % song.audio_file.url)
-            success_msg = "Audio file: '{0}' is removed successfully.".format(
-                song.audio_file.url)
-            fail_msg = "Audio file: '{0}' is not deleted.".format(
-                song.audio_file.url)
-            log_in_file(is_deleted, success_msg, fail_msg)
+            remove_file_logging(song.audio_file.url)
             song.delete()
 
         # Deleting album
-        if platform.system() == 'Windows':
-            album_image = album.album_logo.url.split('/')[-1]
-            is_deleted = os.system('cd media && del {0}'.format(album_image))
-        else:
-            is_deleted = os.system('rm -rf .%s' % album.album_logo.url)
-        success_msg = "Album logo: '{0}' is removed successfully.".format(
-            album.album_logo.url)
-        fail_msg = "Album logo: '{0}' is not deleted.".format(
-            album.album_logo.url)
-        log_in_file(is_deleted, success_msg, fail_msg)
+        remove_file_logging(album.album_logo.url)
         album.delete()
         return redirect('music:index')
 
@@ -284,7 +255,7 @@ class SongCreate(View):
     def post(self, request):
         if not request.user.is_authenticated():
             return redirect('music:login')
-        
+
         form = SongForm(request.POST or None, request.FILES or None)
         if form.is_valid():
             album_id = int(request.POST.get('album'))
@@ -320,18 +291,8 @@ class SongDelete(View):
 
         album = get_object_or_404(Album, id=album_id)
         song = get_object_or_404(Song, id=song_id)
-        log.info('Operating system: {0}'.format(platform.system()))
         # Deleting song
-        if platform.system() == 'Windows':
-            song_file = song.audio_file.url.split('/')[-1]
-            is_deleted = os.system('cd media && del {0}'.format(song_file))
-        else:
-            is_deleted = os.system('rm -rf .%s' % song.audio_file.url)
-        success_msg = "Audio file: '{0}' is removed successfully.".format(
-            song.audio_file.url)
-        fail_msg = "Audio file: '{0}' is not deleted.".format(
-            song.audio_file.url)
-        log_in_file(is_deleted, success_msg, fail_msg)
+        remove_file_logging(song.audio_file.url)
         song.delete()
         return render(request, 'music/detail.html',
             {'album': album, 'is_authenticated': True})
@@ -443,7 +404,7 @@ class UserFormView(View):
                 return render(request, self.template_name,
                     {'form': form, 'phone_code': sms_code})
             # Formatting text message data
-            sms_message = """Hi {0}, You have successfully registered with 
+            sms_message = """Hi {0}, You have successfully registered with
             online music app.\nPlease login to {1}/music/login/\n\n
             Thank you,\nSongs India Team""".format(
                 form.cleaned_data['first_name'], request.get_host())
@@ -451,9 +412,9 @@ class UserFormView(View):
             sms.send_sms(settings.FROM_SMS_NO, phone_number, sms_message)
             # Formatting email data
             subject = 'Welcome to - SongsIndia.com'
-            email_body = """Hello {0},<br><br>Thank you for register with our 
+            email_body = """Hello {0},<br><br>Thank you for register with our
                 online music application.<br><br>Your login credentials:<br>
-                Username: {1}<br>Password: {2}<br><br> 
+                Username: {1}<br>Password: {2}<br><br>
                 If you like this web site please
                 share it with you friends.<br><br><br>Thank you,<br>Songs India Team<br>""".format(
                     form.cleaned_data['first_name'], username, password)
@@ -535,7 +496,7 @@ class ForgetPasswordView(View):
                 context = {'form': form,
                            'error_message': 'Username does not exists.'}
                 return render(request, self.template_name, context)
-            
+
             try:
                 user = User.objects.get(Q(username=username) & Q(email=email))
             except User.DoesNotExist:
@@ -617,7 +578,7 @@ class ChangePasswordView(View):
             Your new Songs India credentials:<br><br>
             &nbsp;&nbsp;&nbsp;&nbsp;Username: {1}<br>
             &nbsp;&nbsp;&nbsp;&nbsp;New Password: {2}<br><br>
-            Please <a href="{3}/music/login/">click here</a> 
+            Please <a href="{3}/music/login/">click here</a>
             to login your account.<br><br><br>
             Thank You,<br>Songs India Team""".format(user.first_name,
                 user.username, new_password, request.get_host())
@@ -648,8 +609,19 @@ def select_next_pre_song(songs, context):
     return context
 
 
-def log_in_file(is_deleted, success_msg='', fail_msg=''):
-    if not is_deleted:
-        log.debug(success_msg)
-    else:
-        log.debug(fail_msg)
+def remove_file_logging(file_location):
+    log.info('Operating system: {0}'.format(platform.system()))
+    try:
+        if platform.system() == 'Windows':
+            deleting_file = file_location.split('/')[-1]
+            os.remove('songsindia.com\media\{0}'.format(deleting_file))
+        else:
+            os.remove('songsindia.com{0}'.format(file_location))
+
+        log.debug('File: {0} is removed successfully.'.format(
+            file_location))
+
+    except OSError as err:
+        log.info(err)
+        log.debug('File: {0} does not exists in the system!!!.'.format(
+            file_location))

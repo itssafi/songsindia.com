@@ -137,24 +137,22 @@ MEDIA_URL = '/media/'
 
 STATIC_ROOT = '/home/safiullask/songsindia.com/music/static'
 
-# AUTH_USER_MODEL = 'music.CustomUser'
-
 # Email config
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_NAME = 'songs.india.team@gmail.com'
-EMAIL_HOST_PASSWORD = 'etoqduytbzqkcjpm'
+EMAIL_HOST_NAME = 'xxx@gmail.com'
+EMAIL_HOST_PASSWORD = 'xxx'
 EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = EMAIL_HOST_NAME
 
 # SMS config
-TWILIO_SID = 'AC1d66923fa66779f6d4c271756856fc38'
-TWILIO_TOKEN = '4d9de98bf2286dc8441969efaa8fbbfb'
-FROM_SMS_NO = '+12187555715'
+TWILIO_SID = 'AC1***'
+TWILIO_TOKEN = '4d9de***'
+FROM_SMS_NO = '+910123456789'
 
-TEST_SID = 'AC16f023537850abb5a37660c902eb61b5'
-TEST_TOKEN = '4a8f78dd296ddbfb461a12e5c858e7e7'
+TEST_SID = 'AC***b5'
+TEST_TOKEN = '4a8f7***8e7e7'
 
 LOGGING = {
     'version': 1,
