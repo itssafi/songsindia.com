@@ -65,7 +65,7 @@
                         <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp; Add Album
                     </a>
                 </li>
-                <li>
+                <li class="{% block change_password %}{% endblock %}">
                     <a href="{% url 'music:change-password' %}">
                         <span class="glyphicon glyphicon-cd" aria-hidden="true"></span>&nbsp; Change Password
                     </a>

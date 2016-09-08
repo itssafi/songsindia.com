@@ -1,10 +1,10 @@
 import re
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-from .models import Album, Song
+from .models import Album, Song, User
 
 
 class UserForm(UserCreationForm):
@@ -74,7 +74,7 @@ class UserForm(UserCreationForm):
 
     def clean_phone_number(self):
         try:
-            user = User.objects.get(email__iexact=self.cleaned_data['phone_number'])
+            user = User.objects.get(phone_number__iexact=self.cleaned_data['phone_number'])
         except User.DoesNotExist:
             return self.cleaned_data['phone_number']
         raise forms.ValidationError(_("The phone number already used. Please try another one."))

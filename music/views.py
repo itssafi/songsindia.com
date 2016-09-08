@@ -1,16 +1,20 @@
-import random, string, os, logging, platform
+import random, string, logging, ctypes
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.views.generic import View, RedirectView
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from django.db.models import Q
 from django.conf import settings
-from .models import Album, Song
+from .models import Album, Song, User
 from .forms import UserForm, AlbumForm, SongForm, AlbumFormUpdate
 from utils.forms.custom_forms import (PasswordResetForm, ChangePasswordForm,
     LoginForm, ChangePasswordFormUnAuth)
 from utils.send_email import send_email
 from utils.send_sms import SendTextMessage
+from utils.utils import (select_next_pre_song, remove_file_logging,
+    sms_message, register_email_body, forget_pass_email_body,
+    change_pass_email_body)
+
 
 log = logging.getLogger(__name__)
 
@@ -190,6 +194,8 @@ class AlbumCreate(View):
             album = form.save(commit=False)
             album.user = request.user
             album.save()
+            log.debug("'{0}' added album: '{1}' successfully.".format(
+                request.user, album))
             return redirect('music:index')
 
         return render(request, self.template_name, {'form': form})
@@ -215,6 +221,8 @@ class AlbumUpdateView(View):
             if request.FILES:
                 remove_file_logging(existing_logo)
             album.save()
+            log.debug("'{0}' updated album: '{1}' successfully.".format(
+                request.user, album))
             return redirect('music:index')
 
         return render(request, self.template_name, {'form': form})
@@ -235,6 +243,8 @@ class AlbumDelete(View):
         # Deleting album
         remove_file_logging(album.album_logo.url)
         album.delete()
+        log.debug("'{0}' deleted album: '{1}' successfully.".format(
+            request.user, album))
         return redirect('music:index')
 
 
@@ -272,6 +282,8 @@ class SongCreate(View):
             song = form.save(commit=False)
             song.album = album
             song.save()
+            log.debug("'{0}' added song: '{1}' to album: '{2}' successfully.".format(
+                request.user, song, album))
             context = {
                 'album': album,
                 'is_authenticated': True
@@ -294,6 +306,8 @@ class SongDelete(View):
         # Deleting song
         remove_file_logging(song.audio_file.url)
         song.delete()
+        log.debug("'{0}' deleted song: '{1}' from album: '{2}' successfully.".format(
+            request.user, song, album))
         return render(request, 'music/detail.html',
             {'album': album, 'is_authenticated': True})
 
@@ -318,6 +332,8 @@ class SongFavoriteView(View):
             else:
                 song.is_favorite = True
             song.save()
+            log.debug("'{0}' updated song: {1} to album: '{2}' successfully.".format(
+                request.user, song, song.album))
         except (KeyError, Song.DoesNotExist):
             if template == 'songs':
                 return render(request, 'music/songs.html',
@@ -364,6 +380,8 @@ class AlbumFavoriteView(View):
             else:
                 album.is_favorite = True
             album.save()
+            log.debug("'{0}' updated album: '{1}' successfully.".format(
+                request.user, album))
         except (KeyError, Album.DoesNotExist):
             context = {
                 'albums': albums,
@@ -394,7 +412,6 @@ class UserFormView(View):
             password = form.cleaned_data['password1']
             phone_number = form.cleaned_data['phone_number']
             user.set_password(password)
-            user.save()
 
             sms = SendTextMessage(settings.TWILIO_SID, settings.TWILIO_TOKEN)
             sms_code = sms.validate_phone_number(phone_number)
@@ -404,24 +421,20 @@ class UserFormView(View):
                 return render(request, self.template_name,
                     {'form': form, 'phone_code': sms_code})
             # Formatting text message data
-            sms_message = """Hi {0}, You have successfully registered with
-            online music app.\nPlease login to {1}/music/login/\n\n
-            Thank you,\nSongs India Team""".format(
+            message = sms_message.format(
                 form.cleaned_data['first_name'], request.get_host())
             # Sending text message to proviede phone number
-            sms.send_sms(settings.FROM_SMS_NO, phone_number, sms_message)
+            sms.send_sms(settings.FROM_SMS_NO, phone_number, message)
             # Formatting email data
             subject = 'Welcome to - SongsIndia.com'
-            email_body = """Hello {0},<br><br>Thank you for register with our
-                online music application.<br><br>Your login credentials:<br>
-                Username: {1}<br>Password: {2}<br><br>
-                If you like this web site please
-                share it with you friends.<br><br><br>Thank you,<br>Songs India Team<br>""".format(
+            email_body = register_email_body.format(
                     form.cleaned_data['first_name'], username, password)
             # Sending email to proviede email ID
             send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
                 form.cleaned_data['email'], subject, email_body)
             # Returns User objects if credentials are correct
+            user.save()
+            log.debug("'{0}' registered successfully.".format(username))
             user = authenticate(username=username, password=password)
             if user is not None:
                 if user.is_active:
@@ -454,6 +467,7 @@ class UserLoginView(View):
                 if user.is_active:
                     login(request, user)
                     log.debug("'{0}' logged in successfully.".format(username))
+                    ctypes.windll.user32.MessageBoxA(0, 'Login Succesful !!!', 'Login Window', 1)
                     return redirect('music:index')
                 else:
                     return render(request, self.login_template,
@@ -474,6 +488,7 @@ class LogoutView(RedirectView):
     url = '/music/login/'
 
     def get(self, request, *args, **kwargs):
+        log.debug("'{0}' logged out successfully.".format(request.user))
         logout(request)
         return super(LogoutView, self).get(request, *args, **kwargs)
 
@@ -509,13 +524,10 @@ class ForgetPasswordView(View):
             user.set_password(temp_pass)
             user.is_active = False
             user.save()
+            log.debug("'{0}' requsted to reset password.".format(request.user))
             # Formatting email data to Reset password
             subject = 'Reset Password - SongsIndia.com'
-            email_body = """Hello {0},<br><br>Your Songs India credentials:<br><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;Username: {1}<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;Temporary Password: {2}<br><br>
-            Please <a href="{3}/music/change-password/">click here</a>
-            to reset your password.<br><br><br>Thank you,<br>Songs India Team""".format(
+            email_body = forget_pass_email_body.format(
                 user.first_name, user.username, temp_pass, request.get_host())
 
             success_message = 'An email has been sent to {0}. Please check its inbox to continue '\
@@ -572,15 +584,10 @@ class ChangePasswordView(View):
             user.set_password(new_password)
             user.is_active = True
             user.save()
+            log.debug("'{0}' is changed password successfully.".format(request.user))
 
             subject = 'Password Changed Successfully - SongsIndia.com'
-            email_body = """Hello {0},<br><br>Your password has been changed successfully.
-            Your new Songs India credentials:<br><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;Username: {1}<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;New Password: {2}<br><br>
-            Please <a href="{3}/music/login/">click here</a>
-            to login your account.<br><br><br>
-            Thank You,<br>Songs India Team""".format(user.first_name,
+            email_body = change_pass_email_body.format(user.first_name,
                 user.username, new_password, request.get_host())
             send_email(settings.DEFAULT_FROM_EMAIL, settings.EMAIL_HOST_PASSWORD,
                 user.email, subject, email_body)
@@ -589,39 +596,3 @@ class ChangePasswordView(View):
                        ' Please login with the changed password.'}
             return redirect('music:login')
         return render(request, self.template_name, {'form': form})
-
-
-def select_next_pre_song(songs, context):
-    pre_song, next_song, is_found = None, None, False
-    for index, song in enumerate(songs):
-        if is_found:
-            context['next_song'] = song
-            break
-        elif song.song_title == context['song_title']:
-            is_found = True
-            context['previous_song'] = pre_song
-            if songs.count() == index + 1:
-                context['next_song'] = next_song
-                break
-        else:
-            pre_song = song
-
-    return context
-
-
-def remove_file_logging(file_location):
-    log.info('Operating system: {0}'.format(platform.system()))
-    try:
-        if platform.system() == 'Windows':
-            deleting_file = file_location.split('/')[-1]
-            os.remove('songsindia.com\media\{0}'.format(deleting_file))
-        else:
-            os.remove('songsindia.com{0}'.format(file_location))
-
-        log.debug('File: {0} is removed successfully.'.format(
-            file_location))
-
-    except OSError as err:
-        log.info(err)
-        log.debug('File: {0} does not exists in the system!!!.'.format(
-            file_location))
