@@ -1,4 +1,4 @@
-import random, string, logging, ctypes
+import random, string, logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.views.generic import View, RedirectView
@@ -399,6 +399,9 @@ class UserFormView(View):
 
     # Display blank form
     def get(self, request):
+        if request.user.is_authenticated():
+            return redirect('music:index')
+
         form = self.form_class(None)
         return render(request, self.template_name, {'form': form})
 
@@ -450,10 +453,8 @@ class UserLoginView(View):
 
     def get(self, request):
         if request.user.is_authenticated():
-            albums = Album.objects.filter(user=request.user).order_by('album_title')
-            user = get_object_or_404(User, username=request.user)
-            return render(request, 'music/index.html',
-                          {'albums': albums, 'user_name': user.first_name})
+            return redirect('music:index')
+
         form = self.form_class(None)
         return render(request, self.login_template, {'form': form})
 
@@ -467,7 +468,6 @@ class UserLoginView(View):
                 if user.is_active:
                     login(request, user)
                     log.debug("'{0}' logged in successfully.".format(username))
-                    ctypes.windll.user32.MessageBoxA(0, 'Login Succesful !!!', 'Login Window', 1)
                     return redirect('music:index')
                 else:
                     return render(request, self.login_template,

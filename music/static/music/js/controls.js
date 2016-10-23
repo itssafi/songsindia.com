@@ -10,6 +10,7 @@ var speakerButton2 = document.getElementById('speaker2');
 
 var fullDuration = document.getElementById('fullDuration');
 var currentTime = document.getElementById('currentTime');
+var volume_per = document.getElementById('volume');
 
 var barSize = 640;
 var bar = document.getElementById('defaultBar');
@@ -33,6 +34,7 @@ window.onload = function () {
 	if (track.currentSrc != "") {
 	    trackVolume = parseFloat(document.getElementById('audio_volume').value);
         track.volume = trackVolume
+        volume_per.innerHTML = pad(parseInt(trackVolume * 100))
 		playOrPause();
 	}
 }
@@ -61,10 +63,12 @@ function muteOrSpeaker() {
     if(track.muted == true){
         track.muted = false;
         muteButton.style.backgroundImage = 'url(/static/speaker.png)';
+        volume_per.innerHTML = pad(parseInt(track.volume * 100))
     }
     else {
         track.muted = true;
         muteButton.style.backgroundImage = 'url(/static/mute.png)';
+        volume_per.innerHTML = "00"
     }
 }
 
@@ -106,34 +110,40 @@ function volumePlus() {
         track.muted = false;
         trackVolume = track.volume;
         muteButton.style.backgroundImage = 'url(/static/speaker.png)';
+        volume_per.innerHTML = pad(parseInt(trackVolume * 100))
         console.log("DEBUG: Audio volume: " + track.volume);
     }
     else if(track.muted == false && track.volume < 1.0) {
-        track.volume += 0.1;
+        track.volume += 0.05;
         trackVolume = track.volume;
+        volume_per.innerHTML = pad(parseInt(trackVolume * 100))
         console.log("DEBUG: Audio volume: " + track.volume);
     }
     else {
-        track.volume += 0.1;
+        track.volume += 0.05;
         trackVolume = track.volume;
+        volume_per.innerHTML = pad(parseInt(trackVolume * 100))
         console.log("DEBUG: Audio volume: " + track.volume);
     }
 }
 
 function volumeMinus() {
-    if(track.muted == false && track.volume > 0.1) {
-        track.volume -= 0.1;
+    if(track.muted == false && track.volume > 0.05) {
+        track.volume -= 0.05;
         trackVolume = track.volume;
+        volume_per.innerHTML = pad(parseInt(trackVolume * 100))
     }
-    else if(track.muted == false && track.volume < 0.1) {
+    else if(track.muted == false && track.volume < 0.05) {
         track.volume = 0.0;
         trackVolume = track.volume;
         track.muted = true;
+        volume_per.innerHTML = pad(parseInt(trackVolume * 100))
         muteButton.style.backgroundImage = 'url(/static/mute.png)';
     }
     else {
-        track.volume -= 0.1;
+        track.volume -= 0.05;
         trackVolume = track.volume;
+        volume_per.innerHTML = pad(parseInt(trackVolume * 100))
     }
 }
 
