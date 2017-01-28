@@ -126,8 +126,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
-AUDIO_FILE_TYPES = ['audio/wav', 'audio/mpeg', 'audio/x-ms-wma', 'audio/mp3', 'audio/ogg']
-IMAGE_FILE_TYPES = ['image/png', 'image/jpg', 'image/jpeg']
+AUDIO_FILE_TYPES = ('WAV', 'MID', 'MIDI', 'RM', 'RAM', 'MP3', 'OGG', 'WMA', 'AAC', 'MP4')
+IMAGE_FILE_TYPES = ('PNG', 'JPG', 'JPEG', 'EXIF', 'TIFF', 'BMP', 'GIF')
 
 STATIC_URL = '/static/'
 

@@ -105,9 +105,10 @@ class AlbumForm(forms.ModelForm):
         if self.cleaned_data['album_logo']:
             if hasattr(self.cleaned_data['album_logo'], 'content_type') or 'album_logo' in self.changed_data:
                 album_logo = self.cleaned_data['album_logo']
-                file_type = album_logo.content_type
-                if file_type not in settings.IMAGE_FILE_TYPES:
-                    raise forms.ValidationError(_('Image file must be PNG, JPG, or JPEG'))
+                file_type = str(album_logo._name).split('.')[-1]
+                if file_type.upper() not in settings.IMAGE_FILE_TYPES:
+                    raise forms.ValidationError(_(
+                        "Image file must be %s." % ', '.join(settings.IMAGE_FILE_TYPES)))
 
                 file_size = album_logo.size / float(1024**2)
                 if file_size > 1.5:
@@ -130,9 +131,10 @@ class SongForm(forms.ModelForm):
 
     def clean_audio_file(self):
         audio_file = self.cleaned_data['audio_file']
-        file_type = audio_file.content_type
-        if file_type not in settings.AUDIO_FILE_TYPES:
-            raise forms.ValidationError(_('Audio file must be WAV, WMA, MP3 or OGG'))
+        file_type = str(audio_file._name).split('.')[-1]
+        if file_type.upper() not in settings.AUDIO_FILE_TYPES:
+            raise forms.ValidationError(_(
+                "Audio file must be %s." % ', '.join(settings.AUDIO_FILE_TYPES)))
 
         file_size = audio_file.size / float(1024**2)
         if file_size > 7.0:
