@@ -1,14 +1,13 @@
-import re
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User
+from users.models import User
 
 
 class PasswordResetForm(forms.Form):
-    username = forms.CharField(label=_("Username"),
-                               widget=forms.TextInput(attrs=dict(required=True, max_length=15)))
     email = forms.EmailField(label=_("Email address"),
                              widget=forms.TextInput(attrs=dict(required=True, max_length=50)))
+    phone_number = forms.CharField(label=_("Phone number"),
+                               widget=forms.TextInput(attrs=dict(required=True, max_length=15)))
 
 
 class ChangePasswordForm(forms.Form):
@@ -32,29 +31,34 @@ class ChangePasswordForm(forms.Form):
                                 widget=forms.PasswordInput(attrs=dict(required=True,
                                                                       max_length=30,
                                                                       render_value=False)))
- 
+
+    def clean_password1(self):
+        if self.cleaned_data.get('password1'):
+            if self.cleaned_data.get('password') == self.cleaned_data.get('password1'):
+                raise forms.ValidationError(_("The new password can't be same with the current password."))
+
     def clean_password2(self):
-        if self.cleaned_data.has_key('password1'):
+        if self.cleaned_data.get('password1'):
             if self.cleaned_data['password1'] != self.cleaned_data['password2']:
-                raise forms.ValidationError(_("The two password fields didn't match."))
+                raise forms.ValidationError(_("The new password and confirm new password didn't match."))
 
 
 class ChangePasswordFormUnAuth(ChangePasswordForm):
-    username = forms.CharField(label=_("Username"),
-                               widget=forms.TextInput(attrs=dict(required=True, max_length=15)))
+    email = forms.EmailField(label=_("Email ID"),
+                             widget=forms.TextInput(attrs=dict(required=True, max_length=15)))
 
-    def clean_username(self):
+    def clean_email(self):
         try:
-            user = User.objects.get(username__iexact=self.cleaned_data['username'])
+            User.objects.get(email__iexact=self.cleaned_data['email'])
         except User.DoesNotExist:
-            raise forms.ValidationError(_("The username don't exist. Please retry with correct one."))
-        return self.cleaned_data['username']
+            raise forms.ValidationError(_("The email id don't exist. Please retry with correct one."))
+        return self.cleaned_data['email']
 
 
 class LoginForm(forms.Form):
-    username = forms.CharField(label=_("Username"),
+    email = forms.CharField(label=_("Email"),
                                widget=forms.TextInput(attrs=dict(required=True,
-                                max_length=15, placeholder='Enter username')))
+                                max_length=15, placeholder='Enter email id')))
     password = forms.CharField(label=_("Password"),
                                 widget=forms.PasswordInput(attrs=dict(required=True,
                                     max_length=30, render_value=False,
