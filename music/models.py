@@ -1,10 +1,10 @@
-from django.contrib.auth.models import User, AbstractUser
 from django.db import models
-from django.core.urlresolvers import reverse
+from django.urls import reverse
+from users.models import User
 
 
 class Album(models.Model):
-    user = models.ForeignKey(User, default=1)
+    user = models.ForeignKey(User, default=1, on_delete=models.CASCADE)
     artist = models.CharField(max_length=250)
     album_title = models.CharField(max_length=500)
     genre = models.CharField(max_length=100)
@@ -29,7 +29,3 @@ class Song(models.Model):
 
     def __str__(self):
         return self.song_title + ' - ' + self.album.artist
-
-
-class User(User):
-    phone_number = models.CharField(max_length=15)

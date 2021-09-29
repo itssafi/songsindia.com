@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Songs India | Home{% endblock %}</title>
-    {% load staticfiles %}
+    {% load static %}
     <link rel="shortcut icon" type="image/png" href="{%  static 'favicon.ico' %}"/>
     <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Satisfy">
@@ -57,22 +57,27 @@
             <ul class="nav navbar-nav navbar-right">
                 <li class="{% block add_song_active %}{% endblock %}">
                     <a href="{% url 'music:song-add' %}">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp; Add Song
+                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbspAdd Song
                     </a>
                 </li>
                 <li class="{% block add_album_active %}{% endblock %}">
                     <a href="{% url 'music:album-add' %}">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp; Add Album
+                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbspAdd Album
+                    </a>
+                </li>
+                <li class="{% block update_user %}{% endblock %}">
+                    <a href="{% url 'users:update' %}">
+                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>&nbspUpdate
                     </a>
                 </li>
                 <li class="{% block change_password %}{% endblock %}">
-                    <a href="{% url 'music:change-password' %}">
-                        <span class="glyphicon glyphicon-cd" aria-hidden="true"></span>&nbsp; Change Password
+                    <a href="{% url 'users:change-password' %}">
+                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>&nbspChange Password
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'music:logout' %}">
-                        <span class="glyphicon glyphicon-off" aria-hidden="true"></span>&nbsp; Logout
+                    <a href="{% url 'users:logout' %}">
+                        <span class="glyphicon glyphicon-off" aria-hidden="true"></span>&nbspLogout
                     </a>
                 </li>
             </ul>
